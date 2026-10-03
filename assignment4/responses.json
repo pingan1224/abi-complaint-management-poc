@@ -1,0 +1,50 @@
+[
+  {
+    "id": "V1-C1",
+    "prompt_version": 1,
+    "complaint": "My credit card statement shows the same purchase charged twice. I recognize the purchase, but I only made it once. I contacted the merchant and have not received a response. Please help me dispute the duplicate charge.",
+    "model_display_name": "llama-3.1-8b-instruct",
+    "provenance": "User pasted AI Chat response into this conversation; not a direct server export. Model revision and serving settings not established.",
+    "raw_response": "{   \"summary\": \"Duplicate charge on credit card statement\",   \"issue\": \"Merchant error: duplicate charge\",   \"urgency\": \"Medium\",   \"routing\": \"Merchant\",   \"escalation\": \"None\",   \"human_review\": true,   \"recommended_action\": \"Request merchant to investigate and correct duplicate charge\" }"
+  },
+  {
+    "id": "V1-C2",
+    "prompt_version": 1,
+    "complaint": "I have disputed this credit card charge twice. I did not make this purchase, and I am worried someone has my card information. The merchant has not responded. Please help.",
+    "model_display_name": "llama-3.1-8b-instruct",
+    "provenance": "User pasted AI Chat response into this conversation; not a direct server export. Model revision and serving settings not established.",
+    "raw_response": "{   \"summary\": \"Unauthorized credit card charge\",   \"issue\": \"Unauthorized transaction: potential card information breach\",   \"urgency\": \"High\",   \"routing\": \"Merchant\",   \"escalation\": \"Bank Investigation\",   \"human_review\": true,   \"recommended_action\": \"Investigate further and take necessary actions to protect the customer's account\" }"
+  },
+  {
+    "id": "V1-C3",
+    "prompt_version": 1,
+    "complaint": "There is a problem with a charge on my credit card statement. I am not sure what happened. Please help me understand it.",
+    "model_display_name": "llama-3.1-8b-instruct",
+    "provenance": "User pasted AI Chat response into this conversation; not a direct server export. Model revision and serving settings not established.",
+    "raw_response": "{   \"summary\": \"Unclear credit card charge\",   \"issue\": \"Insufficient information: unclear transaction details\",   \"urgency\": \"Low\",   \"routing\": \"Customer\",   \"escalation\": \"None\",   \"human_review\": true,   \"recommended_action\": \"Request additional information from the customer to understand the issue\" }"
+  },
+  {
+    "id": "V2-C1",
+    "prompt_version": 2,
+    "complaint": "My credit card statement shows the same purchase charged twice. I recognize the purchase, but I only made it once. I contacted the merchant and have not received a response. Please help me dispute the duplicate charge.",
+    "model_display_name": "llama-3.1-8b-instruct",
+    "provenance": "User pasted AI Chat response into this conversation; not a direct server export. Model revision and serving settings not established.",
+    "raw_response": "{\n  \"summary\": \"Duplicate charge of a recognized purchase on credit card statement, with no response from merchant after customer inquiry\",\n  \"issue\": \"Billing dispute\",\n  \"urgency\": \"Medium\",\n  \"routing\": \"Card Billing Disputes\",\n  \"escalation\": false,\n  \"human_review\": true,\n  \"recommended_action\": \"Contact the merchant again to request a response and provide evidence of the duplicate charge\"\n}"
+  },
+  {
+    "id": "V2-C2",
+    "prompt_version": 2,
+    "complaint": "I have disputed this credit card charge twice. I did not make this purchase, and I am worried someone has my card information. The merchant has not responded. Please help.",
+    "model_display_name": "llama-3.1-8b-instruct",
+    "provenance": "User pasted AI Chat response into this conversation; not a direct server export. Model revision and serving settings not established.",
+    "raw_response": "```json\n{\n  \"summary\": \"Customer disputed a credit card charge twice, claiming it was unauthorized and the merchant has not responded.\",\n  \"issue\": \"Possible unauthorized transaction\",\n  \"urgency\": \"High\",\n  \"routing\": \"Card Fraud and Security\",\n  \"escalation\": false,\n  \"human_review\": true,\n  \"recommended_action\": \"Verify the customer's account information and attempt to contact the merchant to confirm the disputed charge.\"\n}\n```\n\nThis JSON object summarizes the complaint, categorizes the issue, and determines the urgency and routing. It also indicates that escalation is not necessary and that human review is required. The recommended action is to verify the customer's account information and attempt to contact the merchant to confirm the disputed charge."
+  },
+  {
+    "id": "V2-C3",
+    "prompt_version": 2,
+    "complaint": "There is a problem with a charge on my credit card statement. I am not sure what happened. Please help me understand it.",
+    "model_display_name": "llama-3.1-8b-instruct",
+    "provenance": "User pasted AI Chat response into this conversation; not a direct server export. Model revision and serving settings not established.",
+    "raw_response": "{\n  \"summary\": \"Customer is unsure about a charge on their credit card statement and requests assistance in understanding it.\",\n  \"issue\": \"Insufficient information\",\n  \"urgency\": \"Medium\",\n  \"routing\": \"Manual Triage\",\n  \"escalation\": false,\n  \"human_review\": true,\n  \"recommended_action\": \"Request additional information from the customer to clarify the issue with the charge.\"\n}"
+  }
+]

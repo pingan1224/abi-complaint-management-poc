@@ -1,0 +1,66 @@
+V1-C1 FORMAT_PASS
+  String escalation; V1 prompt did not specify its type.
+V1-C2 FORMAT_PASS
+  String escalation; V1 prompt did not specify its type.
+V1-C3 FORMAT_PASS
+  String escalation; V1 prompt did not specify its type.
+V2-C1 FORMAT_PASS
+V2-C2 REJECT
+  not_strict_json: Expecting value: line 1 column 1 (char 0)
+V2-C3 FORMAT_PASS
+Format pass: 5 / 6
+FORMAT_PASS does not establish factual accuracy, safe routing, or permission to execute an action.
+
+Machine-readable results:
+[
+  {
+    "id": "V1-C1",
+    "prompt_version": 1,
+    "errors": [],
+    "observations": [
+      "String escalation; V1 prompt did not specify its type."
+    ],
+    "status": "FORMAT_PASS"
+  },
+  {
+    "id": "V1-C2",
+    "prompt_version": 1,
+    "errors": [],
+    "observations": [
+      "String escalation; V1 prompt did not specify its type."
+    ],
+    "status": "FORMAT_PASS"
+  },
+  {
+    "id": "V1-C3",
+    "prompt_version": 1,
+    "errors": [],
+    "observations": [
+      "String escalation; V1 prompt did not specify its type."
+    ],
+    "status": "FORMAT_PASS"
+  },
+  {
+    "id": "V2-C1",
+    "prompt_version": 2,
+    "errors": [],
+    "observations": [],
+    "status": "FORMAT_PASS"
+  },
+  {
+    "id": "V2-C2",
+    "prompt_version": 2,
+    "errors": [
+      "not_strict_json: Expecting value: line 1 column 1 (char 0)"
+    ],
+    "observations": [],
+    "status": "REJECT"
+  },
+  {
+    "id": "V2-C3",
+    "prompt_version": 2,
+    "errors": [],
+    "observations": [],
+    "status": "FORMAT_PASS"
+  }
+]
