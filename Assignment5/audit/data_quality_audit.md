@@ -218,7 +218,7 @@ The artifact should prevent target/reference fields from being accidentally incl
 
 **Branch:** `louyinuo/hw5-candidate`
 
-**Commit:** To be recorded after the Assignment 5 artifact is implemented and verified.
+**Commit:** 41a74c7261c7d5f949a8af5a47028d343fb3535f
 
 ---
 
