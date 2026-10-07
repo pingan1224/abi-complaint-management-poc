@@ -1,0 +1,3 @@
+# Keep raw run evidence and local credentials out of candidate commits.
+*.jsonl
+.env

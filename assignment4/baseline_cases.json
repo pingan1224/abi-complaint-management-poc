@@ -1,0 +1,14 @@
+[
+  {
+    "id": "C1_DUPLICATE_CHARGE",
+    "complaint": "My credit card statement shows the same purchase charged twice. I recognize the purchase, but I only made it once. I contacted the merchant and have not received a response. Please help me dispute the duplicate charge."
+  },
+  {
+    "id": "C2_UNAUTHORIZED_CHARGE",
+    "complaint": "I have disputed this credit card charge twice. I did not make this purchase, and I am worried someone has my card information. The merchant has not responded. Please help."
+  },
+  {
+    "id": "C3_UNCLEAR_CHARGE",
+    "complaint": "There is a problem with a charge on my credit card statement. I am not sure what happened. Please help me understand it."
+  }
+]
