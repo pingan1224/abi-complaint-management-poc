@@ -1,0 +1,9 @@
+{
+  "summary": "Unauthorized Debit Card Transaction Dispute",
+  "issue": "Customer disputes a debit card purchase and is concerned about card details security",
+  "urgency": "High",
+  "routing": "Escalate to Card Issuer's Dispute Resolution Team",
+  "escalation": true,
+  "human_review": true,
+  "next_action": "Verify customer's identity and initiate an investigation with the card issuer"
+}
