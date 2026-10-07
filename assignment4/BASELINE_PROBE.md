@@ -10,6 +10,8 @@ Do not use course held-out evaluation cases for this learning exercise. The team
 
 Use Python 3.10+ with no third-party packages. The model ID must be confirmed from the authenticated Open WebUI model list. A display name alone does not prove the exact model build or serving configuration.
 
+To reproduce the local transport check without contacting DGX, run `python -B assignment4/test_baseline_probe.py`. It starts a mock HTTP server on 127.0.0.1, exercises all three cases, and checks request structure, raw-text preservation, JSON syntax signaling, duplicate-key rejection, and the absence of the mock key in the saved evidence. A passing mock test does not prove the real Open WebUI deployment works.
+
 ```bash
 python -B assignment4/baseline_probe.py --model ACTUAL_MODEL_ID --dry-run
 export OPEN_WEBUI_API_KEY='YOUR_KEY'  # set this privately; do not commit it
