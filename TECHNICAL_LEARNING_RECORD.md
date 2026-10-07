@@ -60,7 +60,7 @@ AI helped explain Git and Python, draft the parser, and diagnose the
 malformed test file. I checked the JSON behavior against Python's
 documentation and controlled valid and invalid inputs.
 
-## Self-reflection draft
+## Self-reflection
 
 I learned that I can make technical work manageable by choosing one
 small behavior and checking it directly. AI helped me understand Git
