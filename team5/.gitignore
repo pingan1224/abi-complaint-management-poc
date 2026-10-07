@@ -1,0 +1,5 @@
+generated/
+*.jsonl
+*predictions*.json
+*predictions*.csv
+__pycache__/

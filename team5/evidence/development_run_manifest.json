@@ -1,0 +1,37 @@
+{
+  "source_sha256": "edc95eb03b97681c8c7fce63163b29608751cd20260593e01a9b6a188c743a53",
+  "source_rows": 8000,
+  "scope": {
+    "product": "Credit card",
+    "issue": "Billing disputes",
+    "submitted_via": "Web"
+  },
+  "scope_rows": 653,
+  "model_input_keys": [
+    "course_record_id",
+    "consumer_complaint_narrative"
+  ],
+  "split_seed": "group2-team5-v1",
+  "validation_group_fraction": 0.2,
+  "split_counts": {
+    "internal_validation": 112,
+    "train_candidate": 541
+  },
+  "routing_reference_counts": {
+    "Card Billing Disputes": 513,
+    "Card Fraud & Security": 140
+  },
+  "label_status_counts": {
+    "Clear": 401,
+    "Insufficient Evidence": 15,
+    "Judgment Required": 237
+  },
+  "limitations": [
+    "Source issue is an offline cohort filter, not a model input or validated live intake gate.",
+    "Whitespace-identical narratives are grouped; near duplicates are not detected.",
+    "Synthetic labels remain provisional and require adjudication for consequential claims.",
+    "Internal validation is Development evidence, not held-out evaluation."
+  ],
+  "model_inputs_sha256": "6dc6bc1a9616b3eab4786c4edcd0619b5a9d7e0004387fb017cb51f3b91ad11e",
+  "split_manifest_sha256": "6ba9c87f533731dc9e3bb615c53e3f1d060b54fb5df28a1c0607b8ad992436ff"
+}
