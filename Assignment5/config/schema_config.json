@@ -1,0 +1,43 @@
+{
+  "capability": "Employee-assisted routing, escalation, and human-review support for web-submitted credit-card billing disputes",
+  "scope": {
+    "product": "Credit card",
+    "issue": "Billing disputes",
+    "submitted_via": "Web"
+  },
+  "model_inputs": [
+    "consumer_complaint_narrative"
+  ],
+  "target_fields": [
+    "routing_destination",
+    "escalation_required",
+    "human_review_required"
+  ],
+  "reference_fields": [
+    "recommended_next_action",
+    "fraud_indicator"
+  ],
+  "excluded_from_predictive_input": [
+    "routing_destination",
+    "escalation_required",
+    "human_review_required",
+    "recommended_next_action",
+    "fraud_indicator",
+    "label_status",
+    "label_confidence",
+    "special_case_flags"
+  ],
+  "metadata_fields": [
+    "course_record_id",
+    "dataset_split",
+    "intended_use",
+    "case_id",
+    "date_received",
+    "label_provenance"
+  ],
+  "post_outcome_fields": [
+    "company_response_to_consumer",
+    "timely_response",
+    "consumer_disputed"
+  ]
+}

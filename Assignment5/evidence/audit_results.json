@@ -1,0 +1,278 @@
+{
+  "dataset_rows": 8000,
+  "dataset_columns": 29,
+  "required_columns_check": {
+    "status": "PASS",
+    "missing_columns": []
+  },
+  "input_target_boundary_check": {
+    "status": "PASS",
+    "overlap": []
+  },
+  "missingness": {
+    "consumer_complaint_narrative": {
+      "missing_count": 0,
+      "missing_rate": 0.0
+    },
+    "routing_destination": {
+      "missing_count": 0,
+      "missing_rate": 0.0
+    },
+    "escalation_required": {
+      "missing_count": 0,
+      "missing_rate": 0.0
+    },
+    "human_review_required": {
+      "missing_count": 0,
+      "missing_rate": 0.0
+    },
+    "recommended_next_action": {
+      "missing_count": 0,
+      "missing_rate": 0.0
+    },
+    "fraud_indicator": {
+      "missing_count": 0,
+      "missing_rate": 0.0
+    },
+    "label_status": {
+      "missing_count": 0,
+      "missing_rate": 0.0
+    },
+    "label_confidence": {
+      "missing_count": 0,
+      "missing_rate": 0.0
+    },
+    "urgency_level": {
+      "missing_count": 0,
+      "missing_rate": 0.0
+    },
+    "sub_product": {
+      "missing_count": 4000,
+      "missing_rate": 0.5
+    },
+    "sub_issue": {
+      "missing_count": 8000,
+      "missing_rate": 1.0
+    }
+  },
+  "duplicate_narrative_check": {
+    "status": "FLAG",
+    "duplicate_rows": 14,
+    "duplicate_narratives": 7
+  },
+  "target_distribution": {
+    "routing_destination": {
+      "Card Pricing & Fees": 1041,
+      "Deposit Operations": 957,
+      "Card Account Servicing": 956,
+      "Debit Card & ATM Disputes": 939,
+      "Card Fraud & Security": 928,
+      "Overdraft & Fee Review": 548,
+      "Card Billing Disputes": 517,
+      "Deposit Account Servicing": 468,
+      "Payments & Transfers": 288,
+      "Card Complaints Resolution": 280,
+      "Prepaid Fraud & Security": 250,
+      "Transfer Fraud & Scams": 172,
+      "Transfer Operations": 133,
+      "Transfer Compliance & Disclosures": 79,
+      "Card Rewards": 78,
+      "Prepaid Account Servicing": 69,
+      "Card Customer Care": 67,
+      "Card Transaction Operations": 60,
+      "Prepaid Fee Review": 48,
+      "Card Underwriting": 47,
+      "Prepaid Funding Operations": 25,
+      "Card Payments/Payoff": 21,
+      "Transfer Customer Support": 16,
+      "Prepaid Compliance & Disclosures": 5,
+      "Card Collections": 5,
+      "Prepaid Card Disputes": 3
+    },
+    "escalation_required": {
+      "No": 4778,
+      "Yes": 3222
+    },
+    "human_review_required": {
+      "Yes": 4102,
+      "No": 3898
+    }
+  },
+  "label_status_distribution": {
+    "Clear": 5495,
+    "Judgment Required": 2365,
+    "Insufficient Evidence": 140
+  },
+  "leakage_checks": [
+    {
+      "source_field": "fraud_indicator",
+      "target_field": "routing_destination",
+      "status": "FLAG",
+      "explanation": "Reference field may directly reveal routing destination.",
+      "contingency_table": {
+        "Card Account Servicing": {
+          "No": 926,
+          "Yes": 30
+        },
+        "Card Billing Disputes": {
+          "No": 490,
+          "Yes": 27
+        },
+        "Card Collections": {
+          "No": 5,
+          "Yes": 0
+        },
+        "Card Complaints Resolution": {
+          "No": 268,
+          "Yes": 12
+        },
+        "Card Customer Care": {
+          "No": 63,
+          "Yes": 4
+        },
+        "Card Fraud & Security": {
+          "No": 0,
+          "Yes": 928
+        },
+        "Card Payments/Payoff": {
+          "No": 21,
+          "Yes": 0
+        },
+        "Card Pricing & Fees": {
+          "No": 993,
+          "Yes": 48
+        },
+        "Card Rewards": {
+          "No": 75,
+          "Yes": 3
+        },
+        "Card Transaction Operations": {
+          "No": 47,
+          "Yes": 13
+        },
+        "Card Underwriting": {
+          "No": 47,
+          "Yes": 0
+        },
+        "Debit Card & ATM Disputes": {
+          "No": 580,
+          "Yes": 359
+        },
+        "Deposit Account Servicing": {
+          "No": 350,
+          "Yes": 118
+        },
+        "Deposit Operations": {
+          "No": 688,
+          "Yes": 269
+        },
+        "Overdraft & Fee Review": {
+          "No": 474,
+          "Yes": 74
+        },
+        "Payments & Transfers": {
+          "No": 204,
+          "Yes": 84
+        },
+        "Prepaid Account Servicing": {
+          "No": 69,
+          "Yes": 0
+        },
+        "Prepaid Card Disputes": {
+          "No": 3,
+          "Yes": 0
+        },
+        "Prepaid Compliance & Disclosures": {
+          "No": 5,
+          "Yes": 0
+        },
+        "Prepaid Fee Review": {
+          "No": 46,
+          "Yes": 2
+        },
+        "Prepaid Fraud & Security": {
+          "No": 0,
+          "Yes": 250
+        },
+        "Prepaid Funding Operations": {
+          "No": 22,
+          "Yes": 3
+        },
+        "Transfer Compliance & Disclosures": {
+          "No": 72,
+          "Yes": 7
+        },
+        "Transfer Customer Support": {
+          "No": 15,
+          "Yes": 1
+        },
+        "Transfer Fraud & Scams": {
+          "No": 0,
+          "Yes": 172
+        },
+        "Transfer Operations": {
+          "No": 130,
+          "Yes": 3
+        }
+      }
+    },
+    {
+      "source_field": "escalation_required",
+      "target_field": "human_review_required",
+      "status": "FLAG",
+      "explanation": "Escalation and human-review labels are directly aligned.",
+      "contingency_table": {
+        "No": {
+          "No": 3898,
+          "Yes": 0
+        },
+        "Yes": {
+          "No": 880,
+          "Yes": 3222
+        }
+      }
+    }
+  ],
+  "scoped_cohort_audit": {
+    "status": "PASS",
+    "rows": 653,
+    "label_status_distribution": {
+      "Clear": 401,
+      "Judgment Required": 237,
+      "Insufficient Evidence": 15
+    },
+    "urgency_distribution": {
+      "Medium": 381,
+      "High": 171,
+      "Critical": 101
+    },
+    "sub_product_missing": {
+      "count": 653,
+      "rate": 1.0
+    },
+    "sub_issue_missing": {
+      "count": 653,
+      "rate": 1.0
+    },
+    "escalation_human_review_crosstab": {
+      "No": {
+        "No": 285,
+        "Yes": 0
+      },
+      "Yes": {
+        "No": 82,
+        "Yes": 286
+      }
+    },
+    "fraud_routing_crosstab": {
+      "Card Billing Disputes": {
+        "No": 486,
+        "Yes": 27
+      },
+      "Card Fraud & Security": {
+        "No": 0,
+        "Yes": 140
+      }
+    }
+  }
+}
