@@ -2,6 +2,12 @@
 
 This candidate runs three fixed synthetic credit-card complaints through an Open WebUI chat-completions API and records the exact request and response. It complements the existing candidate output checkers. It does not validate facts, routing, urgency, escalation policy, or employee decisions.
 
+## Relationship to Group 2's agreed scope
+
+Team Exercises 2 and 3 narrowed the classroom PoC to **web-submitted credit-card billing disputes**. Its employee-facing readout should distinguish Card Billing Disputes from Card Fraud and Security, show escalation or human-review status, rationale, and uncertainty, and allow human confirmation, override, rejection, or deferral. The cases in this probe are synthetic examples within that problem area; the current prompt is an exploratory, unadapted-model format probe, not the team's approved schema or routing policy. It does not explicitly encode the Web channel, constrain destinations to the two team categories, or require a rationale and uncertainty indicator. These are known gaps for team review, not performance failures proven by this script.
+
+Do not use course held-out evaluation cases for this learning exercise. The team's threshold proposals and instructional labels are not observed bank results. The probe cannot establish business materiality, safety-gate performance, or incremental value over rules, forms, interface changes, or training.
+
 Use Python 3.10+ with no third-party packages. The model ID must be confirmed from the authenticated Open WebUI model list. A display name alone does not prove the exact model build or serving configuration.
 
 ```bash
