@@ -121,7 +121,7 @@ def prepare(csv_path, manifest_path, tokenizer, max_length, selection_path):
         assert len(labels) == len(complete) and any(v != -100 for v in labels)
         examples.append((complete, labels))
     provenance = {"selection_file_sha256": digest(selection_path), "source_sha256": digest(csv_path), "manifest_sha256": digest(manifest_path),
-                  "selection_rule": "Same 48 training and 12 validation IDs pinned from the completed Llama experiment; Qwen full sequence <=512; no truncation",
+                  "selection_rule": "Same 48 training and 12 validation IDs pinned from the completed Llama experiment; Qwen full sequence <=640; no truncation",
                   "train_per_class": 16, "validation_clear_per_class": 3, "validation_uncertain": 3,
                   "scope_count": len(cohort), "skipped_long_candidates": dict(skipped),
                   "no_shared_narrative_groups": True, "course_final_holdout_opened": False,
@@ -172,7 +172,7 @@ def run(args):
     random.seed(SEED)
     torch.manual_seed(SEED)
     torch.cuda.manual_seed_all(SEED)
-    config = {"base_model": args.model, "seed": SEED, "steps": args.steps, "max_sequence_tokens": 512,
+    config = {"base_model": args.model, "seed": SEED, "steps": args.steps, "max_sequence_tokens": 640,
               "optimizer": "AdamW", "learning_rate": 2e-4, "weight_decay": 0.0,
               "batch_size": 1, "gradient_accumulation": 1, "clip_grad_norm": 1.0,
               "dtype": "bfloat16", "quantization": "school FP8 compressed-tensors checkpoint dequantized to BF16 for every condition; no FP8 inference kernels", "attention": "sdpa",
@@ -188,7 +188,7 @@ def run(args):
     write_json(out / "frozen_config.json", config)
     event("configuration_frozen", gpu=config["gpu"])
     tokenizer = AutoTokenizer.from_pretrained(args.model, local_files_only=True)
-    train, validation, examples, routes, provenance = prepare(args.csv, args.manifest, tokenizer, 512, args.selection)
+    train, validation, examples, routes, provenance = prepare(args.csv, args.manifest, tokenizer, 640, args.selection)
     write_json(out / "data_provenance.json", provenance)
     write_json(out / "validation_cases.json", [{k: r[k] for k in ["course_record_id", "consumer_complaint_narrative", "label_status", *FIELDS]} for r in validation])
     # Explicitly check original source/config identity; no Hub revision is inferred.
