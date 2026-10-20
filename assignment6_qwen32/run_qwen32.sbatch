@@ -17,4 +17,4 @@ cd "$HOME/abi-assignment6-qwen32"
  --csv "$HOME/abi-assignment5-inputs/ABI_Bank_Complaints_Development_8000.csv" \
  --manifest "$HOME/abi-assignment5-evidence/data_run/internal_split_manifest.csv" \
  --selection assignment6_qwen32/pinned_case_ids.json \
- --output assignment6_qwen32/evidence/run3 --steps 48
+ --output assignment6_qwen32/evidence/run4 --steps 48
