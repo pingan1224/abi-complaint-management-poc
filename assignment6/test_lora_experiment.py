@@ -47,6 +47,15 @@ class BoundaryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "not the expected Qwen 2.5 32B"):
                 check_local_32b_model(Path(directory))
 
+    def test_quantized_local_checkpoint_is_rejected(self):
+        with tempfile.TemporaryDirectory(prefix=".test-", dir=ROOT) as directory:
+            path = Path(directory) / "config.json"
+            path.write_text(json.dumps({"model_type": "qwen2", "hidden_size": 5120,
+                                        "num_hidden_layers": 64,
+                                        "quantization_config": {"load_in_4bit": True}}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "checkpoint is quantized"):
+                check_local_32b_model(Path(directory))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -118,6 +118,8 @@ def check_local_32b_model(model_dir: Path) -> str:
                   if model_config.get(key) != wanted}
     if mismatches:
         raise ValueError(f"Local checkpoint is not the expected Qwen 2.5 32B architecture: {mismatches}")
+    if model_config.get("quantization_config"):
+        raise ValueError("Local checkpoint is quantized; this frozen exercise requires ordinary BF16 LoRA")
     return digest(path)
 
 
