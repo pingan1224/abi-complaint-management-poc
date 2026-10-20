@@ -175,7 +175,7 @@ def run(args):
     config = {"base_model": args.model, "seed": SEED, "steps": args.steps, "max_sequence_tokens": 640,
               "optimizer": "AdamW", "learning_rate": 2e-4, "weight_decay": 0.0,
               "batch_size": 1, "gradient_accumulation": 1, "clip_grad_norm": 1.0,
-              "dtype": "bfloat16", "quantization": "school FP8 compressed-tensors checkpoint dequantized to BF16 for every condition; no FP8 inference kernels", "attention": "sdpa",
+              "dtype": "bfloat16", "quantization": "school FP8 checkpoint dequantized to BF16, reconstructed as plain Linear modules with quantization handlers removed for every condition", "attention": "sdpa",
               "lora": {"r": 8, "lora_alpha": 16, "lora_dropout": 0.05, "target_modules": ["q_proj", "v_proj"], "bias": "none", "task_type": "CAUSAL_LM"},
               "generation": {"do_sample": False, "max_new_tokens": 128},
               "decision_rule": "Recommend further team review only if C improves schema-valid outputs over B without a newly observed serious semantic error. Otherwise retain B as the current candidate. This exploratory sample cannot establish deployment readiness.",
@@ -201,9 +201,38 @@ def run(args):
     event("data_validated", training=len(train), validation=len(validation), no_group_overlap=True)
 
     def load_base():
-        return AutoModelForCausalLM.from_pretrained(args.model, local_files_only=True, dtype=torch.bfloat16,
-                                                    attn_implementation="sdpa", device_map={"": "cuda:0"},
-                                                    quantization_config=CompressedTensorsConfig(dequantize=True))
+        base = AutoModelForCausalLM.from_pretrained(args.model, local_files_only=True, dtype=torch.bfloat16,
+                attn_implementation="sdpa", device_map={"": "cuda:0"},
+                quantization_config=CompressedTensorsConfig(dequantize=True))
+        # Decompression left quantization forward handlers in the first attempt.
+        # Reuse dequantized parameters in plain Linear modules before adding LoRA.
+        replaced = 0
+        for module in base.modules():
+            if hasattr(module, "quantization_enabled"):
+                module.quantization_enabled = False
+        for name, module in list(base.named_modules()):
+            if isinstance(module, torch.nn.Linear) and hasattr(module, "quantization_scheme"):
+                if module.weight.dtype != torch.bfloat16:
+                    raise RuntimeError("Expected dequantized BF16 linear weights")
+                dense = torch.nn.Linear(module.in_features, module.out_features,
+                                        bias=module.bias is not None, device="meta", dtype=torch.bfloat16)
+                dense.weight = module.weight
+                if module.bias is not None:
+                    dense.bias = module.bias
+                parent_name, _, child = name.rpartition(".")
+                parent = base.get_submodule(parent_name) if parent_name else base
+                setattr(parent, child, dense)
+                replaced += 1
+        if not replaced:
+            raise RuntimeError("No compressed-tensors linear modules were reconstructed")
+        for owner, attr in [(base.config, "quantization_config"), (base, "hf_quantizer"),
+                            (base, "quantization_method"), (base, "quantization_config")]:
+            if hasattr(owner, attr):
+                delattr(owner, attr)
+        base.is_quantized = False
+        event("dense_base_reconstructed", linear_modules=replaced,
+              residual_quantized_linear_modules=sum(isinstance(m, torch.nn.Linear) and hasattr(m, "quantization_scheme") for m in base.modules()))
+        return base
 
     responses = []
 
@@ -239,6 +268,10 @@ def run(args):
     model.enable_input_require_grads()
     trainable = [p for p in model.parameters() if p.requires_grad]
     event("training_started", trainable_parameters=sum(p.numel() for p in trainable), total_parameters=sum(p.numel() for p in model.parameters()))
+    b_parameters = [p for n, p in model.named_parameters() if "lora_B" in n and p.requires_grad]
+    initial_b_max = max(float(p.detach().abs().max()) for p in b_parameters)
+    if initial_b_max != 0:
+        raise RuntimeError("Expected default zero initialization of LoRA B")
     optimizer = torch.optim.AdamW(trainable, lr=2e-4, weight_decay=0.0)
     model.train()
     started = time.monotonic()
@@ -251,11 +284,25 @@ def run(args):
         if not torch.isfinite(loss):
             raise RuntimeError("Non-finite training loss; preserve the failed run")
         loss.backward()
+        if step == 0:
+            b_grad_nonzero = sum(int(torch.count_nonzero(p.grad)) for p in b_parameters if p.grad is not None)
+            if b_grad_nonzero == 0:
+                raise RuntimeError("LoRA B has no nonzero gradient; stop instead of exporting an unchanged adapter")
+            event("first_gradient_verified", lora_b_nonzero_gradient_elements=b_grad_nonzero)
         torch.nn.utils.clip_grad_norm_(trainable, 1.0)
         optimizer.step()
         event("training_step", step=step + 1, loss=float(loss.detach()), tokens=len(ids))
     torch.cuda.synchronize()
     train_seconds = time.monotonic() - started
+    final_b_max = max(float(p.detach().abs().max()) for p in b_parameters)
+    update_check = {"initial_lora_b_max_abs": initial_b_max, "final_lora_b_max_abs": final_b_max,
+                    "first_b_nonzero_gradient_elements": b_grad_nonzero,
+                    "final_b_nonzero_elements": sum(int(torch.count_nonzero(p.detach())) for p in b_parameters)}
+    write_json(out / "training_update_check.json", update_check)
+    if final_b_max == 0:
+        raise RuntimeError("LoRA B remained zero after training")
+    event("training_update_verified", **update_check)
+    del b_parameters
     adapter_path = out / "adapter"
     model.save_pretrained(adapter_path, safe_serialization=True)
     model.config.use_cache = True
