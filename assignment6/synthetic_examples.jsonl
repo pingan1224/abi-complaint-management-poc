@@ -1,0 +1,8 @@
+{"id":"SYN-T01","split":"train","narrative":"The card statement shows one purchase twice. I have the receipt and both entries visible.","decision":"ROUTINE"}
+{"id":"SYN-T02","split":"train","narrative":"I do not recognize several card purchases and believe my card number was stolen.","decision":"REVIEW"}
+{"id":"SYN-T03","split":"train","narrative":"A subscription charge remained after cancellation. I have the cancellation confirmation.","decision":"ROUTINE"}
+{"id":"SYN-T04","split":"train","narrative":"There may be an urgent account security problem, but I cannot identify the charge or provide enough details to decide safely.","decision":"REVIEW"}
+{"id":"SYN-E01","split":"eval","narrative":"A merchant processed a refund but the credit has not appeared. I can provide the transaction date and receipt.","decision":"ROUTINE"}
+{"id":"SYN-E02","split":"eval","narrative":"Someone used my card without permission after my wallet was taken. New charges are still appearing.","decision":"REVIEW"}
+{"id":"SYN-E03","split":"eval","narrative":"I see a possible billing issue, but I cannot tell which transaction it concerns and have no supporting details.","decision":"REVIEW"}
+{"id":"SYN-E04","split":"eval","narrative":"The posted price differs from the receipt for one purchase, and I have both amounts documented.","decision":"ROUTINE"}
