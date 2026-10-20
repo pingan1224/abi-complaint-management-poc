@@ -2,6 +2,8 @@
 
 This folder contains Lou's candidate contribution for the team's review. It is isolated on branch `louyinuo/a6-lora-candidate` and is not merged into `main`.
 
+Initial contribution commit: `13a7180` (`Add Assignment 6 LoRA candidate contribution`).
+
 ## Contribution
 
 - The experiment record documents the project-aligned DGX Spark run, independent recommendation, failure diagnosis, AI verification, team handoff, and reflection.
