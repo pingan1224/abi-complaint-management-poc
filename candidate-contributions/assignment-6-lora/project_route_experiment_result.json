@@ -1,0 +1,93 @@
+{
+  "experiment": "employee_assisted_credit_card_billing_dispute_route_suggestion",
+  "slurm_job_id": "194",
+  "slurm_host": "spark-4694",
+  "gpu": "NVIDIA GB10",
+  "torch": "2.13.0+cu130",
+  "transformers": "5.17.0",
+  "peft": "0.21.2",
+  "model_path": "/mnt/nas/models/approved/qwen2.5-0.5b-instruct",
+  "seed": 20261019,
+  "development_scope": {
+    "filters_for_data_selection_only": {
+      "product": "Credit card",
+      "issue": "Billing disputes",
+      "submitted_via": "Web"
+    },
+    "model_input": "consumer_complaint_narrative only",
+    "target": "routing_destination; Clear labels only",
+    "train_examples": 330,
+    "internal_validation_examples": 71,
+    "official_heldout_used": false,
+    "prior_heldout_preview_disclosed": 2
+  },
+  "training": {
+    "epochs": 3,
+    "optimizer": "AdamW",
+    "learning_rate": 0.0002,
+    "weight_decay": 0.01,
+    "max_length": 1024,
+    "lora": {
+      "r": 4,
+      "alpha": 8,
+      "dropout": 0.0,
+      "target_modules": ["q_proj", "v_proj"]
+    },
+    "trainable_parameters": 270336,
+    "total_parameters": 494303104,
+    "trainable_fraction": 0.0005469033024724846,
+    "mean_epoch_training_loss": [
+      0.4143532875197707,
+      0.05208316714556669,
+      0.012158917400136653
+    ]
+  },
+  "base_internal_validation": {
+    "accuracy": 0.8028169014084507,
+    "confusion_matrix_reference_rows_predicted_columns": [
+      [57, 0],
+      [14, 0]
+    ],
+    "per_route": {
+      "Card Billing Disputes": {
+        "support": 57,
+        "precision": 0.8028169014084507,
+        "recall": 1.0,
+        "f1": 0.890625
+      },
+      "Card Fraud & Security": {
+        "support": 14,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      }
+    }
+  },
+  "adapted_internal_validation": {
+    "accuracy": 0.9436619718309859,
+    "confusion_matrix_reference_rows_predicted_columns": [
+      [55, 2],
+      [2, 12]
+    ],
+    "per_route": {
+      "Card Billing Disputes": {
+        "support": 57,
+        "precision": 0.9649122807017544,
+        "recall": 0.9649122807017544,
+        "f1": 0.9649122807017544
+      },
+      "Card Fraud & Security": {
+        "support": 14,
+        "precision": 0.8571428571428571,
+        "recall": 0.8571428571428571,
+        "f1": 0.8571428571428571
+      }
+    }
+  },
+  "adapter_reload_predictions_identical": true,
+  "adapter_path": "/mnt/nas/students/yl14754/a6_project_route_lora_adapter",
+  "nas_result_path": "/mnt/nas/students/yl14754/a6_project_route_result.json",
+  "nas_log_path": "/mnt/nas/students/yl14754/a6_project_route_lora_194.log",
+  "nas_predictions_path": "/mnt/nas/students/yl14754/a6_project_route_predictions.csv",
+  "elapsed_seconds_including_scoring_and_reload": 61.857743978015
+}

@@ -1,0 +1,26 @@
+{
+  "model_path": "/mnt/nas/models/approved/qwen2.5-0.5b-instruct",
+  "train_csv": "/mnt/nas/students/yl14754/a6_project_route_data/train.csv",
+  "internal_validation_csv": "/mnt/nas/students/yl14754/a6_project_route_data/internal_validation.csv",
+  "adapter_path": "/mnt/nas/students/yl14754/a6_project_route_lora_adapter",
+  "result_path": "/mnt/nas/students/yl14754/a6_project_route_result.json",
+  "prediction_path": "/mnt/nas/students/yl14754/a6_project_route_predictions.csv",
+  "seed": 20261019,
+  "max_length": 1024,
+  "epochs": 3,
+  "learning_rate": 0.0002,
+  "weight_decay": 0.01,
+  "max_grad_norm": 1.0,
+  "scope_filter": {
+    "product": "Credit card",
+    "issue": "Billing disputes",
+    "submitted_via": "Web"
+  },
+  "lora": {
+    "r": 4,
+    "alpha": 8,
+    "dropout": 0.0,
+    "target_modules": ["q_proj", "v_proj"]
+  },
+  "split_policy": "Reuse Team Exercise 5 narrative-grouped internal Development manifest; train only Clear labels; do not inspect/use official Held-out Evaluation data."
+}
