@@ -28,10 +28,11 @@ Place the single missing package in personal storage and verify imports before u
 ```bash
 mkdir -p "$HOME/a6-python"
 /opt/sps-ai-lab/venv-train/bin/python -m pip install --no-deps --target "$HOME/a6-python" 'compressed-tensors==0.17.0'
+/opt/sps-ai-lab/venv-train/bin/python -m pip install --no-deps --target "$HOME/a6-python" loguru
 PYTHONPATH="$HOME/a6-python" /opt/sps-ai-lab/venv-train/bin/python -c 'import torch, transformers, peft, accelerate, compressed_tensors; print("All five imports succeeded")'
 ```
 
-The `--no-deps` flag avoids copying the course's large PyTorch stack. A successful import is a prerequisite, not proof that 32B weights fit or train. If installation or import fails, record the error and stop before submitting a GPU training job.
+The `--no-deps` flag avoids copying the course's large PyTorch stack. The first import check failed on missing `loguru`, a declared compressed-tensors dependency, so it is installed separately above. A successful import is a prerequisite, not proof that 32B weights fit or train. If installation or import fails again, record the error and stop before submitting a GPU training job.
 
 Check out the candidate commit on DGX and choose a **new directory outside Git** for the run. The following commands belong **inside an allocated Slurm GPU job**, not in the JupyterLab terminal directly. Save the output in your personal NAS directory:
 
