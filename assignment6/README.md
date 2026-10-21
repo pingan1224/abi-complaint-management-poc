@@ -1,6 +1,6 @@
 # Assignment 6 candidate LoRA experiment
 
-**Owner:** Yuchen Yuan. **Status:** local format checks complete and a two-minute Slurm GPU probe succeeded; DGX LoRA training and adapter-loading evidence remain pending. This is an individual learning artifact, not a Group 2 model selection decision.
+**Owner:** Yuchen Yuan. **Status:** local and DGX format checks complete; a two-minute Slurm GPU probe succeeded; DGX LoRA training and adapter-loading evidence remain pending. This is an individual learning artifact, not a Group 2 model selection decision.
 
 ## Question and scope
 
@@ -44,6 +44,8 @@ Check out the candidate commit on DGX and choose a **new directory outside Git**
 ```
 
 The training command dequantizes the approved FP8 checkpoint to BF16, verifies the loaded attention projection is BF16, and applies LoRA to `q_proj` and `v_proj` (`r=4`, `alpha=8`, dropout `0`, four optimizer steps, one synthetic example per step, sequence cap 192, learning rate `2e-4`, seed `2026`). It freezes the base, checks the trainable-parameter fraction, masks prompt tokens from the supervised loss, saves only adapter weights/configuration, and writes `run_manifest.json` with the Git commit, package versions, GPU, model path, file hashes, loss, and run time. The evaluation command **reloads the saved adapter** and compares deterministic base and adapted outputs on the same four synthetic diagnostic cases, writing `comparison.json`. This remains untested on the actual DGX packages and may exceed available memory.
+
+The checked-in [`run_dgx_32b.sbatch`](run_dgx_32b.sbatch) requests one GB10, four CPU cores, 100 GB of node memory, and a one-hour limit. It runs preflight, training, and adapter-reload evaluation in a separate Slurm GPU allocation. It writes a job log to the owner's NAS home directory and uses a unique `$HOME/a6-run-$SLURM_JOB_ID` output directory. After updating the DGX checkout to this commit, submit from that checkout with `sbatch assignment6/run_dgx_32b.sbatch`. The requested resources are a trial based on `sinfo` reporting 120000 MB per node, not proof that the dequantized 32B model fits. If the scheduler rejects the request or training fails, preserve the job log and report the actual failure before changing the experiment.
 
 Keep the adapter and all run evidence outside Git. Do not upload model weights, raw course data, credentials, or the held-out CSV. Copy only an approved, redacted run manifest and comparison summary into the assignment record. If package compatibility fails or the run is out of memory, stop and log the exact error; do not silently switch to QLoRA or 8B because that changes the experiment.
 
