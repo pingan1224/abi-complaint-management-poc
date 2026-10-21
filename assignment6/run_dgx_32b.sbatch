@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=a6-32b-lora
 #SBATCH --partition=ai-lab
-#SBATCH --nodelist=spark-1338
+#SBATCH --nodelist=spark-4694
 #SBATCH --gres=gpu:gb10:1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=100G
@@ -10,12 +10,12 @@
 
 set -Eeuo pipefail
 
-PYTHON=/opt/sps-ai-lab/venv-train/bin/python
+PYTHON=/opt/sps-ai-lab/venv/bin/python
 MODEL=/mnt/nas/models/approved/qwen2.5-32b-instruct-fp8
 REPO="$HOME/assignment6-candidate"
 RUN="$HOME/a6-run-$SLURM_JOB_ID"
 
-export PYTHONPATH="$HOME/a6-python${PYTHONPATH:+:$PYTHONPATH}"
+export PYTHONPATH="$HOME/a6-4694-python${PYTHONPATH:+:$PYTHONPATH}"
 export PYTHONUNBUFFERED=1
 export HF_HUB_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
