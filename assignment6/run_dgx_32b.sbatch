@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=a6-32b-lora
 #SBATCH --partition=ai-lab
+#SBATCH --nodelist=spark-1338
 #SBATCH --gres=gpu:gb10:1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=100G
@@ -24,6 +25,7 @@ printf 'UTC start: '
 date -u +%FT%TZ
 printf 'Host: %s\nJob: %s\nCommit: ' "$(hostname)" "$SLURM_JOB_ID"
 git rev-parse HEAD
+test -x "$PYTHON" || { printf 'Training Python is missing on %s: %s\n' "$(hostname)" "$PYTHON" >&2; exit 1; }
 nvidia-smi
 
 "$PYTHON" -c 'from transformers import CompressedTensorsConfig; c = CompressedTensorsConfig(dequantize=True); assert c.dequantize is True; print("FP8 dequantization flag: True")'
