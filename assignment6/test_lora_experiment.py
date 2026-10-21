@@ -12,11 +12,13 @@ class BoundaryTests(unittest.TestCase):
         class BoundaryChangingTokenizer:
             eos_token_id = 99
 
-            def apply_chat_template(self, messages, *, tokenize, add_generation_prompt):
-                self.assert_prompt = (len(messages) == 2 and tokenize and add_generation_prompt)
+            def apply_chat_template(self, messages, *, tokenize, add_generation_prompt,
+                                    return_dict):
+                self.assert_prompt = (len(messages) == 2 and tokenize and
+                                      add_generation_prompt and return_dict)
                 if not self.assert_prompt:
                     raise AssertionError("Completed chat must not be tokenized separately")
-                return [10, 11]
+                return {"input_ids": [10, 11], "attention_mask": [1, 1]}
 
             def encode(self, text, *, add_special_tokens):
                 if text != "REVIEW" or add_special_tokens:

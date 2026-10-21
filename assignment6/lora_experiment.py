@@ -172,9 +172,15 @@ def encode_supervised_sample(tokenizer, row: dict, max_length: int) -> dict:
         {"role": "system", "content": SYSTEM},
         {"role": "user", "content": row["narrative"]},
     ]
-    prompt_ids = tokenizer.apply_chat_template(
-        messages, tokenize=True, add_generation_prompt=True
+    prompt = tokenizer.apply_chat_template(
+        messages, tokenize=True, add_generation_prompt=True, return_dict=True
     )
+    prompt_ids = prompt["input_ids"]
+    if prompt_ids and isinstance(prompt_ids[0], (list, tuple)):
+        if len(prompt_ids) != 1:
+            raise ValueError("Expected one tokenized chat prompt")
+        prompt_ids = prompt_ids[0]
+    prompt_ids = list(prompt_ids)
     answer_ids = tokenizer.encode(row["decision"], add_special_tokens=False)
     if not answer_ids:
         raise ValueError(f"Example {row['id']} has no supervised answer tokens")
