@@ -1,5 +1,6 @@
 {
   "intended_base_model": "Qwen/Qwen2.5-32B-Instruct",
+  "checkpoint_load_mode": "compressed_tensors_fp8_dequantize_bf16",
   "learning_focus": "LoRA adapter configuration, saving, and reloading",
   "task": "Synthetic two-label specialist-review exercise",
   "seed": 2026,

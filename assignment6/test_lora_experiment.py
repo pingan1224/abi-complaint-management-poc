@@ -47,14 +47,28 @@ class BoundaryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "not the expected Qwen 2.5 32B"):
                 check_local_32b_model(Path(directory))
 
-    def test_quantized_local_checkpoint_is_rejected(self):
+    def test_unsupported_quantization_is_rejected(self):
         with tempfile.TemporaryDirectory(prefix=".test-", dir=ROOT) as directory:
             path = Path(directory) / "config.json"
             path.write_text(json.dumps({"model_type": "qwen2", "hidden_size": 5120,
                                         "num_hidden_layers": 64,
                                         "quantization_config": {"load_in_4bit": True}}), encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "checkpoint is quantized"):
+            with self.assertRaisesRegex(ValueError, "Expected the approved compressed-tensors FP8"):
                 check_local_32b_model(Path(directory))
+
+    def test_approved_fp8_architecture_is_accepted(self):
+        with tempfile.TemporaryDirectory(prefix=".test-", dir=ROOT) as directory:
+            path = Path(directory) / "config.json"
+            path.write_text(json.dumps({
+                "model_type": "qwen2", "hidden_size": 5120, "num_hidden_layers": 64,
+                "quantization_config": {
+                    "quant_method": "compressed-tensors", "format": "float-quantized",
+                    "config_groups": {"group_0": {
+                        "targets": ["Linear"], "weights": {"num_bits": 8, "type": "float"},
+                    }},
+                },
+            }), encoding="utf-8")
+            self.assertEqual(len(check_local_32b_model(Path(directory))), 64)
 
 
 if __name__ == "__main__":

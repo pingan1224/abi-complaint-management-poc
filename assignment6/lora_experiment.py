@@ -1,8 +1,9 @@
 """Tiny, synthetic LoRA checkpoint experiment for the course DGX Spark.
 
 Only `preflight` uses the Python standard library. `train` and `evaluate`
-require the course-approved DGX GPU, local base checkpoint, and installed
-PyTorch/Transformers/PEFT/Accelerate packages. No course complaint CSV is read.
+require the course-approved DGX GPU, local compressed-tensors FP8 checkpoint,
+and installed PyTorch/Transformers/PEFT/Accelerate packages. The FP8 weights
+are dequantized to BF16 at load time for LoRA training. No course CSV is read.
 """
 
 from __future__ import annotations
@@ -38,13 +39,15 @@ def digest(path: Path) -> str:
 def load_config(path: Path) -> dict:
     config = json.loads(path.read_text(encoding="utf-8"))
     expected = {
-        "intended_base_model", "learning_focus", "task", "seed", "max_length",
+        "intended_base_model", "checkpoint_load_mode", "learning_focus", "task", "seed", "max_length",
         "max_steps", "learning_rate", "per_device_train_batch_size",
         "gradient_accumulation_steps", "lora_r", "lora_alpha",
         "lora_dropout", "target_modules", "max_new_tokens",
     }
     if set(config) != expected:
         raise ValueError(f"Configuration keys differ: {sorted(set(config) ^ expected)}")
+    if config["checkpoint_load_mode"] != "compressed_tensors_fp8_dequantize_bf16":
+        raise ValueError("This experiment requires explicit FP8-to-BF16 dequantization")
     for key in ("seed", "max_length", "max_steps", "per_device_train_batch_size",
                 "gradient_accumulation_steps", "lora_r", "lora_alpha", "max_new_tokens"):
         if not isinstance(config[key], int) or config[key] <= 0:
@@ -108,7 +111,7 @@ def preflight(config_path: Path, data_path: Path) -> tuple[dict, list[dict], dic
 
 
 def check_local_32b_model(model_dir: Path) -> str:
-    """Reject an accidental 8B checkpoint before allocating GPU memory."""
+    """Require the approved 32B FP8 architecture before allocating GPU memory."""
     path = model_dir / "config.json"
     if not path.is_file():
         raise FileNotFoundError("Local model config.json is missing")
@@ -118,9 +121,34 @@ def check_local_32b_model(model_dir: Path) -> str:
                   if model_config.get(key) != wanted}
     if mismatches:
         raise ValueError(f"Local checkpoint is not the expected Qwen 2.5 32B architecture: {mismatches}")
-    if model_config.get("quantization_config"):
-        raise ValueError("Local checkpoint is quantized; this frozen exercise requires ordinary BF16 LoRA")
+    quant = model_config.get("quantization_config")
+    group = quant.get("config_groups", {}).get("group_0", {}) if isinstance(quant, dict) else {}
+    weights = group.get("weights", {})
+    if not (
+        isinstance(quant, dict)
+        and quant.get("quant_method") == "compressed-tensors"
+        and quant.get("format") == "float-quantized"
+        and weights.get("num_bits") == 8
+        and weights.get("type") == "float"
+        and "Linear" in group.get("targets", [])
+    ):
+        raise ValueError("Expected the approved compressed-tensors FP8 checkpoint")
     return digest(path)
+
+
+def load_dequantized_base(model_dir: Path, torch):
+    """Follow the documented fine-tuning path; never use inference-only FP8 kernels."""
+    from transformers import AutoModelForCausalLM, CompressedTensorsConfig
+
+    model = AutoModelForCausalLM.from_pretrained(
+        model_dir, local_files_only=True,
+        quantization_config=CompressedTensorsConfig(dequantize=True),
+        dtype=torch.bfloat16, low_cpu_mem_usage=True, device_map={"": 0},
+    )
+    q_proj_dtype = str(model.model.layers[0].self_attn.q_proj.weight.dtype)
+    if q_proj_dtype != "torch.bfloat16":
+        raise RuntimeError(f"FP8 dequantization did not yield BF16 q_proj weights: {q_proj_dtype}")
+    return model, q_proj_dtype
 
 
 def train(args: argparse.Namespace, config: dict, examples: list[dict], summary: dict) -> None:
@@ -128,7 +156,7 @@ def train(args: argparse.Namespace, config: dict, examples: list[dict], summary:
     import transformers
     import peft
     from peft import LoraConfig, TaskType, get_peft_model
-    from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments
+    from transformers import AutoTokenizer, Trainer, TrainingArguments
 
     if not torch.cuda.is_available() or not torch.cuda.is_bf16_supported():
         raise RuntimeError("A CUDA GPU with bfloat16 support is required for this LoRA run")
@@ -144,10 +172,7 @@ def train(args: argparse.Namespace, config: dict, examples: list[dict], summary:
     tokenizer = AutoTokenizer.from_pretrained(model_dir, local_files_only=True)
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
-    model = AutoModelForCausalLM.from_pretrained(
-        model_dir, local_files_only=True, torch_dtype=torch.bfloat16,
-        low_cpu_mem_usage=True, device_map={"": 0},
-    )
+    model, q_proj_dtype = load_dequantized_base(model_dir, torch)
     model.config.use_cache = False
     lora = LoraConfig(
         r=config["lora_r"], lora_alpha=config["lora_alpha"],
@@ -230,6 +255,8 @@ def train(args: argparse.Namespace, config: dict, examples: list[dict], summary:
         ).stdout.strip(),
         "model_directory": str(model_dir),
         "base_model_config_sha256": model_config_sha256,
+        "source_checkpoint_format": "compressed-tensors FP8",
+        "loaded_q_proj_dtype": q_proj_dtype,
         "model_config_name": model.config.to_dict().get("_name_or_path"),
         "gpu_name": torch.cuda.get_device_name(0),
         "torch_version": torch.__version__,
@@ -254,7 +281,7 @@ def train(args: argparse.Namespace, config: dict, examples: list[dict], summary:
 def evaluate(args: argparse.Namespace, config: dict, examples: list[dict], summary: dict) -> None:
     import torch
     from peft import PeftModel
-    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from transformers import AutoTokenizer
 
     model_dir = Path(args.model).expanduser().resolve()
     model_config_sha256 = check_local_32b_model(model_dir)
@@ -278,10 +305,9 @@ def evaluate(args: argparse.Namespace, config: dict, examples: list[dict], summa
     if not torch.cuda.is_available():
         raise RuntimeError("CUDA GPU required")
     tokenizer = AutoTokenizer.from_pretrained(model_dir, local_files_only=True)
-    base = AutoModelForCausalLM.from_pretrained(
-        model_dir, local_files_only=True, torch_dtype=torch.bfloat16,
-        low_cpu_mem_usage=True, device_map={"": 0},
-    )
+    base, q_proj_dtype = load_dequantized_base(model_dir, torch)
+    if q_proj_dtype != manifest["loaded_q_proj_dtype"]:
+        raise ValueError("Reloaded base dtype differs from training")
     model = PeftModel.from_pretrained(base, adapter_dir, is_trainable=False)
     model.eval()
 
@@ -340,6 +366,9 @@ def main() -> None:
     args = parser.parse_args()
     config, examples, summary = preflight(args.config, args.examples)
     if args.command == "preflight":
+        if args.model:
+            model_dir = Path(args.model).expanduser().resolve()
+            summary["base_model_config_sha256"] = check_local_32b_model(model_dir)
         print(json.dumps(summary, indent=2))
         return
     if not args.model or not args.output:
