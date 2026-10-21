@@ -21,7 +21,17 @@ This validates exact field names, synthetic IDs, split separation, duplicate nar
 
 ## DGX run, after the training environment is verified
 
-JupyterLab Terminal access and Slurm GPU allocation have been confirmed: probe job 209 ran `nvidia-smi` on an NVIDIA GB10 at `spark-4694`. This was **not** a LoRA run. The current JupyterHub Python lacks the training packages; `/opt/sps-ai-lab/venv-train/bin/python` exists and its package versions and compressed-tensors support still need verification. Use a separate Slurm GPU job for training, since the JupyterLab terminal's own job has no GPU. Do not install packages into a shared environment without administrator guidance.
+JupyterLab Terminal access and Slurm GPU allocation have been confirmed: probe job 209 ran `nvidia-smi` on an NVIDIA GB10 at `spark-4694`. This was **not** a LoRA run. The JupyterHub Python lacks training packages. The course `/opt/sps-ai-lab/venv-train/bin/python` has `torch 2.13.0+cu130`, `transformers 5.19.0`, `peft 0.21.2`, and `accelerate 1.15.0`, but **not** `compressed-tensors`. The separate `/opt/sps-ai-lab/venv/bin/python` has `compressed-tensors 0.17.0` but lacks PEFT and Accelerate. Use a separate Slurm GPU job for training, since the JupyterLab terminal's own job has no GPU. Do not install packages into a shared environment.
+
+Place the single missing package in personal storage and verify imports before using GPU time:
+
+```bash
+mkdir -p "$HOME/a6-python"
+/opt/sps-ai-lab/venv-train/bin/python -m pip install --no-deps --target "$HOME/a6-python" 'compressed-tensors==0.17.0'
+PYTHONPATH="$HOME/a6-python" /opt/sps-ai-lab/venv-train/bin/python -c 'import torch, transformers, peft, accelerate, compressed_tensors; print("All five imports succeeded")'
+```
+
+The `--no-deps` flag avoids copying the course's large PyTorch stack. A successful import is a prerequisite, not proof that 32B weights fit or train. If installation or import fails, record the error and stop before submitting a GPU training job.
 
 Check out the candidate commit on DGX and choose a **new directory outside Git** for the run. The following commands belong **inside an allocated Slurm GPU job**, not in the JupyterLab terminal directly. Save the output in your personal NAS directory:
 

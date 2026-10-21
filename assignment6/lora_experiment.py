@@ -16,6 +16,7 @@ import re
 import subprocess
 import time
 from datetime import datetime, timezone
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -151,6 +152,16 @@ def load_dequantized_base(model_dir: Path, torch):
     return model, q_proj_dtype
 
 
+def require_compressed_tensors() -> str:
+    try:
+        return version("compressed-tensors")
+    except PackageNotFoundError as exc:
+        raise RuntimeError(
+            "compressed-tensors is missing from this Python environment; "
+            "install the course-matched version in personal storage before using the GPU"
+        ) from exc
+
+
 def train(args: argparse.Namespace, config: dict, examples: list[dict], summary: dict) -> None:
     import torch
     import transformers
@@ -158,6 +169,7 @@ def train(args: argparse.Namespace, config: dict, examples: list[dict], summary:
     from peft import LoraConfig, TaskType, get_peft_model
     from transformers import AutoTokenizer, Trainer, TrainingArguments
 
+    compressed_tensors_version = require_compressed_tensors()
     if not torch.cuda.is_available() or not torch.cuda.is_bf16_supported():
         raise RuntimeError("A CUDA GPU with bfloat16 support is required for this LoRA run")
     model_dir = Path(args.model).expanduser().resolve()
@@ -262,6 +274,9 @@ def train(args: argparse.Namespace, config: dict, examples: list[dict], summary:
         "torch_version": torch.__version__,
         "transformers_version": transformers.__version__,
         "peft_version": peft.__version__,
+        "accelerate_version": version("accelerate"),
+        "compressed_tensors_version": compressed_tensors_version,
+        "safetensors_version": version("safetensors"),
         "trainable_parameters": trainable,
         "total_parameters": total,
         "training_loss": result.training_loss,
@@ -283,6 +298,7 @@ def evaluate(args: argparse.Namespace, config: dict, examples: list[dict], summa
     from peft import PeftModel
     from transformers import AutoTokenizer
 
+    compressed_tensors_version = require_compressed_tensors()
     model_dir = Path(args.model).expanduser().resolve()
     model_config_sha256 = check_local_32b_model(model_dir)
     output = Path(args.output).expanduser().resolve()
@@ -302,6 +318,8 @@ def evaluate(args: argparse.Namespace, config: dict, examples: list[dict], summa
         raise ValueError("Requested base model directory differs from training")
     if manifest["base_model_config_sha256"] != model_config_sha256:
         raise ValueError("Base model config changed after training")
+    if manifest["compressed_tensors_version"] != compressed_tensors_version:
+        raise ValueError("compressed-tensors version differs from training")
     if not torch.cuda.is_available():
         raise RuntimeError("CUDA GPU required")
     tokenizer = AutoTokenizer.from_pretrained(model_dir, local_files_only=True)
