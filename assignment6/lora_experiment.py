@@ -162,6 +162,54 @@ def require_compressed_tensors() -> str:
         ) from exc
 
 
+def encode_supervised_sample(tokenizer, row: dict, max_length: int) -> dict:
+    """Append the answer to the exact token sequence used for generation.
+
+    Separately tokenizing a completed chat can change tokens at the prompt
+    boundary, so its token IDs are not a reliable prefix for loss masking.
+    """
+    messages = [
+        {"role": "system", "content": SYSTEM},
+        {"role": "user", "content": row["narrative"]},
+    ]
+    prompt_ids = tokenizer.apply_chat_template(
+        messages, tokenize=True, add_generation_prompt=True
+    )
+    answer_ids = tokenizer.encode(row["decision"], add_special_tokens=False)
+    if not answer_ids:
+        raise ValueError(f"Example {row['id']} has no supervised answer tokens")
+    if tokenizer.eos_token_id is None:
+        raise ValueError("Tokenizer has no assistant end token")
+    full_ids = prompt_ids + answer_ids + [tokenizer.eos_token_id]
+    if len(full_ids) > max_length:
+        raise ValueError(f"Example {row['id']} is too long; do not silently truncate")
+    labels = [-100] * len(prompt_ids) + answer_ids + [tokenizer.eos_token_id]
+    return {"input_ids": full_ids, "attention_mask": [1] * len(full_ids), "labels": labels}
+
+
+def prepare_training_samples(tokenizer, examples: list[dict], max_length: int) -> list[dict]:
+    return [
+        encode_supervised_sample(tokenizer, row, max_length)
+        for row in examples if row["split"] == "train"
+    ]
+
+
+def tokenization_check(args: argparse.Namespace, config: dict, examples: list[dict]) -> None:
+    """Exercise the installed tokenizer without loading model weights or a GPU."""
+    from transformers import AutoTokenizer
+
+    model_dir = Path(args.model).expanduser().resolve()
+    check_local_32b_model(model_dir)
+    tokenizer = AutoTokenizer.from_pretrained(model_dir, local_files_only=True)
+    items = prepare_training_samples(tokenizer, examples, config["max_length"])
+    print(json.dumps({
+        "status": "tokenization_check_only",
+        "training_samples": len(items),
+        "longest_sample_tokens": max(len(item["input_ids"]) for item in items),
+        "assistant_end_token": tokenizer.eos_token,
+    }, indent=2))
+
+
 def train(args: argparse.Namespace, config: dict, examples: list[dict], summary: dict) -> None:
     import torch
     import transformers
@@ -184,6 +232,8 @@ def train(args: argparse.Namespace, config: dict, examples: list[dict], summary:
     tokenizer = AutoTokenizer.from_pretrained(model_dir, local_files_only=True)
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
+    train_items = prepare_training_samples(tokenizer, examples, config["max_length"])
+    print(f"Prepared {len(train_items)} synthetic training samples", flush=True)
     model, q_proj_dtype = load_dequantized_base(model_dir, torch)
     model.config.use_cache = False
     lora = LoraConfig(
@@ -199,33 +249,14 @@ def train(args: argparse.Namespace, config: dict, examples: list[dict], summary:
         raise RuntimeError("Adapter parameter check failed")
 
     class Samples(torch.utils.data.Dataset):
-        def __init__(self, rows):
-            self.items = [encode(row) for row in rows]
+        def __init__(self, items):
+            self.items = items
 
         def __len__(self):
             return len(self.items)
 
         def __getitem__(self, index):
             return self.items[index]
-
-    def encode(row):
-        prefix = [
-            {"role": "system", "content": SYSTEM},
-            {"role": "user", "content": row["narrative"]},
-        ]
-        prompt_ids = tokenizer.apply_chat_template(prefix, tokenize=True, add_generation_prompt=True)
-        full_ids = tokenizer.apply_chat_template(
-            prefix + [{"role": "assistant", "content": row["decision"]}],
-            tokenize=True, add_generation_prompt=False,
-        )
-        if full_ids[:len(prompt_ids)] != prompt_ids:
-            raise ValueError(f"Chat-template prefix mismatch for {row['id']}")
-        if len(full_ids) > config["max_length"]:
-            raise ValueError(f"Example {row['id']} is too long; do not silently truncate")
-        labels = [-100] * len(prompt_ids) + full_ids[len(prompt_ids):]
-        if all(label == -100 for label in labels):
-            raise ValueError(f"Example {row['id']} has no supervised answer tokens")
-        return {"input_ids": full_ids, "attention_mask": [1] * len(full_ids), "labels": labels}
 
     def collate(batch):
         length = max(len(item["input_ids"]) for item in batch)
@@ -247,7 +278,7 @@ def train(args: argparse.Namespace, config: dict, examples: list[dict], summary:
     )
     trainer = Trainer(
         model=model, args=training,
-        train_dataset=Samples([row for row in examples if row["split"] == "train"]),
+        train_dataset=Samples(train_items),
         data_collator=collate,
     )
     start = time.monotonic()
@@ -376,7 +407,7 @@ def evaluate(args: argparse.Namespace, config: dict, examples: list[dict], summa
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("preflight", "train", "evaluate"))
+    parser.add_argument("command", choices=("preflight", "tokenize", "train", "evaluate"))
     parser.add_argument("--config", type=Path, default=ROOT / "experiment.json")
     parser.add_argument("--examples", type=Path, default=ROOT / "synthetic_examples.jsonl")
     parser.add_argument("--model", help="Administrator-approved local 32B HF checkpoint directory")
@@ -388,6 +419,11 @@ def main() -> None:
             model_dir = Path(args.model).expanduser().resolve()
             summary["base_model_config_sha256"] = check_local_32b_model(model_dir)
         print(json.dumps(summary, indent=2))
+        return
+    if args.command == "tokenize":
+        if not args.model:
+            parser.error("tokenize requires --model")
+        tokenization_check(args, config, examples)
         return
     if not args.model or not args.output:
         parser.error("train/evaluate require --model and --output")

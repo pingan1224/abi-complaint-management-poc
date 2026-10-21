@@ -30,6 +30,7 @@ nvidia-smi
 
 "$PYTHON" -c 'from transformers import CompressedTensorsConfig; c = CompressedTensorsConfig(dequantize=True); assert c.dequantize is True; print("FP8 dequantization flag: True")'
 "$PYTHON" -B assignment6/lora_experiment.py preflight --model "$MODEL"
+"$PYTHON" -B assignment6/lora_experiment.py tokenize --model "$MODEL"
 "$PYTHON" -B assignment6/lora_experiment.py train --model "$MODEL" --output "$RUN"
 "$PYTHON" -B assignment6/lora_experiment.py evaluate --model "$MODEL" --output "$RUN"
 

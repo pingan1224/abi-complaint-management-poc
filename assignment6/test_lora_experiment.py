@@ -3,10 +3,34 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from lora_experiment import ROOT, check_local_32b_model, load_config, load_examples, preflight
+from lora_experiment import (ROOT, check_local_32b_model, encode_supervised_sample,
+                             load_config, load_examples, preflight)
 
 
 class BoundaryTests(unittest.TestCase):
+    def test_chat_prompt_boundary_preserves_answer_only_loss(self):
+        class BoundaryChangingTokenizer:
+            eos_token_id = 99
+
+            def apply_chat_template(self, messages, *, tokenize, add_generation_prompt):
+                self.assert_prompt = (len(messages) == 2 and tokenize and add_generation_prompt)
+                if not self.assert_prompt:
+                    raise AssertionError("Completed chat must not be tokenized separately")
+                return [10, 11]
+
+            def encode(self, text, *, add_special_tokens):
+                if text != "REVIEW" or add_special_tokens:
+                    raise AssertionError("Expected plain answer tokens without added specials")
+                return [20, 21]
+
+        row = {"id": "SYN-T01", "narrative": "A synthetic complaint.", "decision": "REVIEW"}
+        item = encode_supervised_sample(BoundaryChangingTokenizer(), row, max_length=5)
+        self.assertEqual(item["input_ids"], [10, 11, 20, 21, 99])
+        self.assertEqual(item["labels"], [-100, -100, 20, 21, 99])
+        self.assertEqual(item["attention_mask"], [1] * 5)
+        with self.assertRaisesRegex(ValueError, "too long"):
+            encode_supervised_sample(BoundaryChangingTokenizer(), row, max_length=4)
+
     def test_frozen_synthetic_input_passes(self):
         _, rows, summary = preflight(ROOT / "experiment.json", ROOT / "synthetic_examples.jsonl")
         self.assertEqual((summary["train_count"], summary["eval_count"]), (4, 4))
