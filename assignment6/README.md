@@ -19,33 +19,22 @@ python -B -m unittest discover -s assignment6 -p 'test_*.py' -v
 
 This validates exact field names, synthetic IDs, split separation, duplicate narratives, reference labels, and the frozen experiment configuration. With `--model /mnt/nas/models/approved/qwen2.5-32b-instruct-fp8`, it also checks the local 32B architecture and FP8 configuration using only Python's standard library. It does **not** load weights, validate GPU training, or validate adapter loading.
 
-## DGX run, after the training environment is verified
+## DGX run status and evidence
 
-JupyterLab Terminal access and Slurm GPU allocation have been confirmed: probe job 209 ran `nvidia-smi` on an NVIDIA GB10 at `spark-4694`. This was **not** a LoRA run. The JupyterHub Python lacks training packages. The course `/opt/sps-ai-lab/venv-train/bin/python` has `torch 2.13.0+cu130`, `transformers 5.19.0`, `peft 0.21.2`, and `accelerate 1.15.0`, but **not** `compressed-tensors`. The separate `/opt/sps-ai-lab/venv/bin/python` has `compressed-tensors 0.17.0` but lacks PEFT and Accelerate. Use a separate Slurm GPU job for training, since the JupyterLab terminal's own job has no GPU. Do not install packages into a shared environment.
+The JupyterLab terminal has no GPU; training requires a separate Slurm job. GPU probe 209 confirmed an NVIDIA GB10 on `spark-4694`. The shared `/opt/sps-ai-lab/venv/bin/python` there has PyTorch 2.13.0, Transformers 5.17.0, and compressed-tensors 0.17.0. PEFT 0.21.2 and Accelerate 1.15.0 are installed only in the owner's `$HOME/a6-4694-python`, which the runner adds to `PYTHONPATH`. CPU probe 216 imported the training components and verified `CompressedTensorsConfig(dequantize=True)`. Import success does **not** prove that the 32B weights load or train.
 
-Place the single missing package in personal storage and verify imports before using GPU time:
+The checked-in [`run_dgx_32b.sbatch`](run_dgx_32b.sbatch) requests one GB10 on `spark-4694`, four CPU cores, 100 GB of node memory, and one hour. It performs preflight, training, and adapter reload evaluation in sequence. The training step dequantizes the approved FP8 checkpoint to BF16, checks the attention projection dtype, and applies LoRA to `q_proj` and `v_proj` (`r=4`, `alpha=8`, four optimizer steps, one synthetic example per step, sequence cap 192, learning rate `2e-4`, seed `2026`). It masks prompt tokens from the loss, saves adapter weights and configuration, and writes `run_manifest.json`. Evaluation reloads the adapter and compares deterministic base and adapted outputs on four distinct synthetic diagnostic cases in `comparison.json`. Logs and artifacts stay in the owner's NAS home directory, outside Git.
 
-```bash
-mkdir -p "$HOME/a6-python"
-/opt/sps-ai-lab/venv-train/bin/python -m pip install --no-deps --target "$HOME/a6-python" 'compressed-tensors==0.17.0'
-/opt/sps-ai-lab/venv-train/bin/python -m pip install --no-deps --target "$HOME/a6-python" loguru
-/opt/sps-ai-lab/venv-train/bin/python -m pip install --target "$HOME/a6-python" 'pydantic>=2,<3'
-PYTHONPATH="$HOME/a6-python" /opt/sps-ai-lab/venv-train/bin/python -c 'import torch, transformers, peft, accelerate, compressed_tensors; print("All five imports succeeded")'
-```
+An earlier job on `spark-4694` failed before model loading because that node lacks `/opt/sps-ai-lab/venv-train/bin/python`. A revised job pinned to `spark-1338` could not start because the node lacked enough unallocated memory; it was cancelled while still pending. The current `spark-4694` runner was submitted as **job 219** from commit `1f90ef0`. At the last check, job 219 was `PD (Resources)` and its log did not yet exist. Two other jobs held 32000 of the node's 120000 MB, leaving about 88000 MB for a request of 100 GB. No model loading or LoRA result has been observed yet.
 
-The `--no-deps` flag avoids copying the course's large PyTorch stack. Import checks then exposed two declared compressed-tensors dependencies: missing `loguru` and `pydantic`. They are installed separately above; the pydantic command includes its own small dependencies. A successful import is a prerequisite, not proof that 32B weights fit or train. If installation or import fails again, record the error and stop before submitting a GPU training job.
-
-Check out the candidate commit on DGX and choose a **new directory outside Git** for the run. The following commands belong **inside an allocated Slurm GPU job**, not in the JupyterLab terminal directly. Save the output in your personal NAS directory:
+Check the existing job rather than submitting another one:
 
 ```bash
-/opt/sps-ai-lab/venv-train/bin/python -B assignment6/lora_experiment.py preflight --model /mnt/nas/models/approved/qwen2.5-32b-instruct-fp8
-/opt/sps-ai-lab/venv-train/bin/python -B assignment6/lora_experiment.py train --model /mnt/nas/models/approved/qwen2.5-32b-instruct-fp8 --output "$HOME/a6-run-01"
-/opt/sps-ai-lab/venv-train/bin/python -B assignment6/lora_experiment.py evaluate --model /mnt/nas/models/approved/qwen2.5-32b-instruct-fp8 --output "$HOME/a6-run-01"
+squeue -j 219 -o '%.18i %.2t %.10M %.10L %.20R'
+if [ -f "$HOME/a6-slurm-219.log" ]; then tail -n 100 "$HOME/a6-slurm-219.log"; else echo 'Log not created yet'; fi
 ```
 
-The training command dequantizes the approved FP8 checkpoint to BF16, verifies the loaded attention projection is BF16, and applies LoRA to `q_proj` and `v_proj` (`r=4`, `alpha=8`, dropout `0`, four optimizer steps, one synthetic example per step, sequence cap 192, learning rate `2e-4`, seed `2026`). It freezes the base, checks the trainable-parameter fraction, masks prompt tokens from the supervised loss, saves only adapter weights/configuration, and writes `run_manifest.json` with the Git commit, package versions, GPU, model path, file hashes, loss, and run time. The evaluation command **reloads the saved adapter** and compares deterministic base and adapted outputs on the same four synthetic diagnostic cases, writing `comparison.json`. This remains untested on the actual DGX packages and may exceed available memory.
-
-The checked-in [`run_dgx_32b.sbatch`](run_dgx_32b.sbatch) requests one GB10 on `spark-4694`, four CPU cores, 100 GB of node memory, and a one-hour limit. Job 210 reached that node but stopped before model loading because `/opt/sps-ai-lab/venv-train/bin/python` was absent. Subsequent CPU probes found `/opt/sps-ai-lab/venv/bin/python` there with PyTorch 2.13.0, Transformers 5.17.0, and compressed-tensors 0.17.0. PEFT 0.21.2 and Accelerate 1.15.0 were installed only in the owner's `$HOME/a6-4694-python`; probe job 216 imported all training components and checked `CompressedTensorsConfig(dequantize=True)`. Job 212 on `spark-1338` remained pending because existing jobs had reserved 101248 of 120000 MB there. Cancel job 212 before submitting this revised runner to avoid concurrent training attempts. The runner writes a job log to the owner's NAS home directory and uses a unique `$HOME/a6-run-$SLURM_JOB_ID` output directory. These CPU probes do **not** establish that the dequantized 32B model loads or trains on the GB10. If the scheduler rejects the request or training fails, preserve the job log and report the actual failure before changing the experiment.
+If it leaves the queue, inspect `sacct -j 219 --format=JobID,State,ExitCode,Elapsed,MaxRSS` and the full job log. Completion requires `run_manifest.json`, saved adapter files, and `comparison.json` under `$HOME/a6-run-219`, with log evidence that all steps finished. If the run fails, retain its exact error before changing the experiment. Do not silently switch to QLoRA or 8B; that changes the question being tested.
 
 Keep the adapter and all run evidence outside Git. Do not upload model weights, raw course data, credentials, or the held-out CSV. Copy only an approved, redacted run manifest and comparison summary into the assignment record. If package compatibility fails or the run is out of memory, stop and log the exact error; do not silently switch to QLoRA or 8B because that changes the experiment.
 
