@@ -1,0 +1,31 @@
+Assignment 6 | DGX execution evidence (sanitized aggregate excerpt)
+
+Execution
+- Slurm job: 253
+- Host: spark-4694
+- GPU: NVIDIA GB10
+- Stack: Torch 2.13.0+cu130; Transformers 5.17.0; PEFT 0.21.2
+- Model: approved Qwen2.5-32B-Instruct FP8 checkpoint; BF16 dequantized weights for training
+- State: job left the Slurm queue and the job result JSON was written; the completed run reported train, validation, and adapter reload metrics.
+- Runtime: 659.0 seconds, including model load, base scoring, training, adapted scoring, and adapter reload
+- Peak CUDA allocation: 66,722,334,720 bytes (about 62.2 GiB)
+
+Scope and configuration
+- Development train: 330 Clear-labeled examples
+- Development internal validation: 71 examples
+- Official Held-out Evaluation examples used: no
+- Epochs: 1; seed: 20261019; maximum length: 512
+- LoRA: r=4, alpha=8, dropout=0, q_proj/v_proj
+- Trainable parameters: 4,194,304 of 32,772,723,712 (0.0128%)
+- Mean epoch loss: 2.994328
+- Prompt-answer boundary merges detected: 285/330; the corrected run tokenized prompt+answer jointly and masked loss at the shared-prefix boundary.
+
+Aggregate validation
+- Base and adapted sequence-log-likelihood accuracy: 61/71 (85.9%) for both.
+- Fraud/security recall: 6/14 (42.9%) for both; billing recall: 55/57 (96.5%).
+- Mean-token sensitivity accuracy: 60/71 (84.5%) for both; fraud/security recall: 5/14 (35.7%).
+- Majority billing baseline: 57/71 (80.3%) accuracy and 0/14 fraud/security recall.
+- Adapter reload predictions exactly matched the in-memory adapted predictions.
+
+Evidence provenance and boundaries
+These aggregate values were checked against the returned result JSON and completed Slurm log in the authenticated DGX JupyterLab session. The unredacted log and row-level prediction CSV remain on the authorized DGX NAS and are intentionally not included in this submission archive. The validation is Development-only; two official holdout examples were inadvertently previewed in an earlier session and were not used for training or tuning. The team should account for that exposure before its final evaluation. Course labels are synthetic instructional references; a human employee must confirm any suggested route.

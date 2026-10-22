@@ -1,0 +1,28 @@
+{
+  "model_path": "/path/to/approved/qwen2.5-32b-instruct-fp8",
+  "dequantize_compressed_tensors": true,
+  "train_csv": "/path/to/authorized-development/train.csv",
+  "internal_validation_csv": "/path/to/authorized-development/internal_validation.csv",
+  "adapter_path": "/path/to/output/adapter",
+  "result_path": "/path/to/output/aggregate_result.json",
+  "prediction_path": "/path/to/output/internal_predictions.csv",
+  "seed": 20261019,
+  "max_length": 512,
+  "epochs": 1,
+  "learning_rate": 0.0002,
+  "weight_decay": 0.01,
+  "max_grad_norm": 1.0,
+  "scope_filter": {
+    "product": "Credit card",
+    "issue": "Billing disputes",
+    "submitted_via": "Web"
+  },
+  "lora": {
+    "r": 4,
+    "alpha": 8,
+    "dropout": 0.0,
+    "target_modules": ["q_proj", "v_proj"]
+  },
+  "split_policy": "Use the pre-existing narrative-grouped Development split; train only Clear labels; never use the official Held-out Evaluation split for training or tuning.",
+  "status": "Portable template. Replace paths and verify approved model and DGX resources before running."
+}
