@@ -24,5 +24,17 @@
     "target_modules": ["q_proj", "v_proj"]
   },
   "split_policy": "Use the pre-existing narrative-grouped Development split; train only Clear labels; never use the official Held-out Evaluation split for training or tuning.",
-  "status": "Portable template. Replace paths and verify approved model and DGX resources before running."
+  "execution_reference": {
+    "slurm_job_id": 255,
+    "partition": "ai-lab",
+    "node": "spark-4694",
+    "gpu": "NVIDIA GB10",
+    "gpu_request": "gpu:gb10:1",
+    "cpus_per_task": 8,
+    "memory": "100G",
+    "time_limit": "08:00:00",
+    "python": "/opt/sps-ai-lab/venv/bin/python",
+    "python_packages": "<STUDENT_NAS>/a6_python_packages"
+  },
+  "status": "Sanitized portable copy of the job 255 run configuration. Personal NAS paths are represented by placeholders; replace them with authorized locations before reuse. Model, Development split, hyperparameters, and resource request match the recorded DGX run."
 }

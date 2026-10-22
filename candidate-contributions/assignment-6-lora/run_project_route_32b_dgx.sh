@@ -2,6 +2,7 @@
 # Slurm template for the authorized DGX environment; adjust resources and paths first.
 #SBATCH --job-name=a6_route32b
 #SBATCH --partition=ai-lab
+#SBATCH --nodelist=spark-4694
 #SBATCH --gres=gpu:gb10:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=100G

@@ -112,12 +112,33 @@ def score_routes(model, tokenizer, prompt, max_length, device):
 
 def classify(model, tokenizer, examples, max_length, device):
     predictions = {"sequence_log_likelihood": [], "mean_token_log_probability": []}
+    billing_minus_fraud_margins = []
     for example in examples:
         prompt = make_prompt(example["consumer_complaint_narrative"])
         scores = score_routes(model, tokenizer, prompt, max_length, device)
         for method in predictions:
             predictions[method].append(max(ROUTES, key=lambda route: scores[route][method]))
-    return predictions
+        billing_minus_fraud_margins.append(
+            scores["Card Billing Disputes"]["sequence_log_likelihood"]
+            - scores["Card Fraud & Security"]["sequence_log_likelihood"]
+        )
+    return predictions, billing_minus_fraud_margins
+
+
+def summarize_margins(references, margins):
+    grouped = {}
+    for route in ROUTES:
+        values = [margin for reference, margin in zip(references, margins) if reference == route]
+        grouped[route] = {
+            "count": len(values),
+            "mean_billing_minus_fraud_log_likelihood": sum(values) / len(values),
+        }
+    return {
+        "count": len(margins),
+        "mean_billing_minus_fraud_log_likelihood": sum(margins) / len(margins),
+        "mean_absolute_margin": sum(abs(margin) for margin in margins) / len(margins),
+        "mean_margin_by_reference_route": grouped,
+    }
 
 
 def metrics(references, predictions):
@@ -184,7 +205,7 @@ def main():
     dequantize_compressed_tensors = bool(config.get("dequantize_compressed_tensors", False))
     base = load_base(model_path, dtype, dequantize_compressed_tensors)
     base.config.use_cache = False
-    base_predictions = classify(base, tokenizer, validation_examples, config["max_length"], device)
+    base_predictions, base_margins = classify(base, tokenizer, validation_examples, config["max_length"], device)
     base_metrics = metrics(val_references, base_predictions["sequence_log_likelihood"])
     base_mean_score_metrics = metrics(val_references, base_predictions["mean_token_log_probability"])
     model = get_peft_model(
@@ -208,6 +229,7 @@ def main():
         weight_decay=config["weight_decay"],
     )
     epoch_train_losses = []
+    step_losses = []
     for epoch in range(config["epochs"]):
         model.train()
         order = list(range(len(train_tokens)))
@@ -227,6 +249,7 @@ def main():
             )
             optimizer.step()
             losses.append(float(loss.detach().cpu()))
+            step_losses.append(losses[-1])
             if step % 10 == 0 or step == len(order):
                 print(f"TRAIN_PROGRESS epoch={epoch + 1} step={step}/{len(order)} loss={losses[-1]:.6f}", flush=True)
         epoch_train_losses.append(sum(losses) / len(losses))
@@ -236,7 +259,7 @@ def main():
     adapter_path.mkdir(parents=True, exist_ok=True)
     model.save_pretrained(adapter_path)
     tokenizer.save_pretrained(adapter_path)
-    adapted_predictions = classify(model, tokenizer, validation_examples, config["max_length"], device)
+    adapted_predictions, adapted_margins = classify(model, tokenizer, validation_examples, config["max_length"], device)
     adapted_metrics = metrics(val_references, adapted_predictions["sequence_log_likelihood"])
     adapted_mean_score_metrics = metrics(val_references, adapted_predictions["mean_token_log_probability"])
 
@@ -245,7 +268,7 @@ def main():
     torch.cuda.empty_cache()
     reloaded_base = load_base(model_path, dtype, dequantize_compressed_tensors)
     reloaded = PeftModel.from_pretrained(reloaded_base, str(adapter_path), local_files_only=True)
-    reloaded_predictions = classify(reloaded, tokenizer, validation_examples, config["max_length"], device)
+    reloaded_predictions, reloaded_margins = classify(reloaded, tokenizer, validation_examples, config["max_length"], device)
     reloaded_metrics = metrics(val_references, reloaded_predictions["sequence_log_likelihood"])
     reloaded_mean_score_metrics = metrics(val_references, reloaded_predictions["mean_token_log_probability"])
     peak_cuda_memory_bytes = torch.cuda.max_memory_allocated()
@@ -275,12 +298,26 @@ def main():
         "total_parameters": total,
         "trainable_fraction": trainable / total,
         "mean_epoch_training_loss": epoch_train_losses,
+        "training_step_loss_summary": {
+            "step_count": len(step_losses),
+            "first_50_steps_mean": sum(step_losses[:50]) / min(50, len(step_losses)),
+            "last_50_steps_mean": sum(step_losses[-50:]) / min(50, len(step_losses)),
+        },
         "examples_with_prompt_answer_token_boundary_merge": boundary_adjusted_examples,
         "base_internal_validation": base_metrics,
+        "base_validation_sequence_log_likelihood_margin": summarize_margins(val_references, base_margins),
         "base_mean_token_score_sensitivity": base_mean_score_metrics,
         "adapted_internal_validation": adapted_metrics,
+        "adapted_validation_sequence_log_likelihood_margin": summarize_margins(val_references, adapted_margins),
+        "adapted_minus_base_margin_shift": {
+            "count": len(base_margins),
+            "mean_shift": sum(adapted - base for base, adapted in zip(base_margins, adapted_margins)) / len(base_margins),
+            "mean_absolute_shift": sum(abs(adapted - base) for base, adapted in zip(base_margins, adapted_margins)) / len(base_margins),
+            "sign_flip_count": sum((base > 0) != (adapted > 0) for base, adapted in zip(base_margins, adapted_margins)),
+        },
         "adapted_mean_token_score_sensitivity": adapted_mean_score_metrics,
         "reloaded_adapter_internal_validation": reloaded_metrics,
+        "reloaded_adapter_validation_sequence_log_likelihood_margin": summarize_margins(val_references, reloaded_margins),
         "reloaded_adapter_mean_token_score_sensitivity": reloaded_mean_score_metrics,
         "adapter_reload_predictions_identical": adapted_predictions == reloaded_predictions,
         "adapter_path": str(adapter_path),

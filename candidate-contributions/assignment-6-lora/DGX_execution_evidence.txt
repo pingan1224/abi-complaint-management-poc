@@ -1,31 +1,67 @@
-Assignment 6 | DGX execution evidence (sanitized aggregate excerpt)
+Assignment 6 | DGX execution evidence (sanitized)
 
-Execution
-- Slurm job: 253
-- Host: spark-4694
-- GPU: NVIDIA GB10
-- Stack: Torch 2.13.0+cu130; Transformers 5.17.0; PEFT 0.21.2
-- Model: approved Qwen2.5-32B-Instruct FP8 checkpoint; BF16 dequantized weights for training
-- State: job left the Slurm queue and the job result JSON was written; the completed run reported train, validation, and adapter reload metrics.
-- Runtime: 659.0 seconds, including model load, base scoring, training, adapted scoring, and adapter reload
-- Peak CUDA allocation: 66,722,334,720 bytes (about 62.2 GiB)
+Verified execution
+- Slurm job 255: COMPLETED, ExitCode 0:0; runtime 00:16:17.
+- Host spark-4694; NVIDIA GB10; request 1 GPU, 8 CPUs, 100G memory; partition ai-lab.
+- Approved Qwen2.5-32B-Instruct FP8 checkpoint, dequantized to BF16; Torch 2.13.0+cu130, Transformers 5.17.0, PEFT 0.21.2.
+- Data: 330 Clear-labeled Development training records and 71 internal Development validation records. Official Held-out Evaluation was not used.
+- Configuration: seed 20261019; one epoch; max length 512; batch 1; AdamW lr 2e-4, weight decay 0.01; LoRA r=4, alpha=8, dropout=0, q_proj/v_proj.
 
-Scope and configuration
-- Development train: 330 Clear-labeled examples
-- Development internal validation: 71 examples
-- Official Held-out Evaluation examples used: no
-- Epochs: 1; seed: 20261019; maximum length: 512
-- LoRA: r=4, alpha=8, dropout=0, q_proj/v_proj
-- Trainable parameters: 4,194,304 of 32,772,723,712 (0.0128%)
-- Mean epoch loss: 2.994328
-- Prompt-answer boundary merges detected: 285/330; the corrected run tokenized prompt+answer jointly and masked loss at the shared-prefix boundary.
+Selected original Slurm log lines
+TRAIN_PROGRESS epoch=1 step=10/330 loss=2.832214
+TRAIN_PROGRESS epoch=1 step=20/330 loss=5.115886
+TRAIN_PROGRESS epoch=1 step=30/330 loss=2.676934
+TRAIN_PROGRESS epoch=1 step=310/330 loss=3.199405
+TRAIN_PROGRESS epoch=1 step=320/330 loss=5.185016
+TRAIN_PROGRESS epoch=1 step=330/330 loss=2.998930
+EPOCH 1/1 MEAN_TRAIN_LOSS 2.994328
 
-Aggregate validation
-- Base and adapted sequence-log-likelihood accuracy: 61/71 (85.9%) for both.
-- Fraud/security recall: 6/14 (42.9%) for both; billing recall: 55/57 (96.5%).
-- Mean-token sensitivity accuracy: 60/71 (84.5%) for both; fraud/security recall: 5/14 (35.7%).
-- Majority billing baseline: 57/71 (80.3%) accuracy and 0/14 fraud/security recall.
-- Adapter reload predictions exactly matched the in-memory adapted predictions.
+Training-effectiveness diagnostics
+- First 50 step mean loss: 2.896849; last 50: 2.958568 (no downward trend).
+- Base and adapted Billing-minus-Fraud sequence log-likelihood margins: mean 4.759957 for both; mean absolute per-example margin change 0 across 71; zero sign flips.
+- Post-run CPU inspection of saved adapter_model.safetensors found 128/128 LoRA-B tensors exactly zero; 128/256 tensors in the file were nonzero. This is consistent with the zero-initialized B matrices not receiving effective updates in this run. The training/update path therefore remains unverified and must be debugged before interpreting the experiment as a successful LoRA learning run.
+- Adapted accuracy remained 61/71 (85.9%), equal to base; fraud/security recall was 6/14 (42.9%). Majority billing baseline: 57/71 (80.3%) and 0/14 fraud recall.
+- Peak CUDA allocation: 66,722,334,720 bytes = 62.14 GiB (62.1 GiB). This is the total run peak, not LoRA's incremental memory; the 61.2 GiB pilot was not a matched comparison.
+- Adapter reload reproduced adapted predictions. Slurm accounting (`sacct`) is disabled on this cluster; completion and exit code were verified using `scontrol show job 255`, with the corresponding log written by the job.
 
-Evidence provenance and boundaries
-These aggregate values were checked against the returned result JSON and completed Slurm log in the authenticated DGX JupyterLab session. The unredacted log and row-level prediction CSV remain on the authorized DGX NAS and are intentionally not included in this submission archive. The validation is Development-only; two official holdout examples were inadvertently previewed in an earlier session and were not used for training or tuning. The team should account for that exposure before its final evaluation. Course labels are synthetic instructional references; a human employee must confirm any suggested route.
+Sanitized original excerpt
+JobId=255 JobName=a6_margin_diag
+JobState=COMPLETED Reason=None
+ExitCode=0:0
+RunTime=00:16:17 TimeLimit=08:00:00
+Partition=ai-lab
+ReqNodeList=spark-4694
+NodeList=spark-4694
+NumNodes=1 NumCPUs=8
+ReqTRES=cpu=8,mem=100G,node=1,billing=8
+TresPerNode=gres/gpu:gb10:1
+
+RESULT_JSON (sanitized beginning)
+{
+  "experiment": "employee_assisted_credit_card_billing_dispute_route_suggestion",
+  "slurm_job_id": "255",
+  "slurm_host": "spark-4694",
+  "gpu": "NVIDIA GB10",
+  "torch": "2.13.0+cu130",
+  "transformers": "5.17.0",
+  "peft": "0.21.2",
+  "base_weight_training_precision": "BF16 dequantized from compressed-tensors FP8",
+  "train_examples": 330,
+  "internal_validation_examples": 71,
+  "official_heldout_used": false,
+  "mean_epoch_training_loss": [2.9943283439585655],
+  "training_step_loss_summary": {
+    "step_count": 330,
+    "first_50_steps_mean": 2.8968493801355364,
+    "last_50_steps_mean": 2.958568000793457
+  },
+  "adapted_minus_base_margin_shift": {
+    "count": 71,
+    "mean_shift": 0.0,
+    "mean_absolute_shift": 0.0,
+    "sign_flip_count": 0
+  }
+}
+
+Evidence boundaries
+The original log, complete aggregate result, Slurm state, and adapter file were inspected in authenticated DGX JupyterLab. Personal NAS paths, student identifier, narratives, row-level predictions, source CSVs, and adapter weights are not included in this archive. This is a Development-only diagnostic, not an official holdout result or production approval. Two official holdout examples were inadvertently previewed in an earlier session; they were not used for training or tuning and the team should account for this exposure.

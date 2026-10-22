@@ -1,0 +1,6 @@
+GitHub repository: https://github.com/pingan1224/abi-complaint-management-poc
+Branch: louyinuo/a6-lora-candidate
+Final local commit: fa1217fd33c12b4a393c161986ed6f6900de5c3b
+Implementation and DGX-evidence commit referenced in the DOCX: cb7acd0a0226dae5c7b0dbac23c4e1a11791ae4d
+
+The package was prepared from the local candidate branch. If uploaded through GitHub's web interface, GitHub creates a separate remote commit; use the branch history on GitHub as the authoritative remote commit ID. The patch file captures the final record update from the implementation/evidence commit.

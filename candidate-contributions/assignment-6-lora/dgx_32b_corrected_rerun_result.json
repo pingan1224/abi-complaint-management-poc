@@ -1,6 +1,6 @@
 {
   "experiment": "employee_assisted_credit_card_billing_dispute_route_suggestion",
-  "slurm_job_id": "253",
+  "slurm_job_id": "255",
   "slurm_host": "spark-4694",
   "gpu": "NVIDIA GB10",
   "software": {
@@ -27,6 +27,11 @@
   "total_parameters": 32772723712,
   "trainable_fraction": 0.00012798155065958772,
   "mean_epoch_training_loss": 2.9943283439585655,
+  "training_step_loss_summary": {
+    "step_count": 330,
+    "first_50_steps_mean": 2.8968493801355364,
+    "last_50_steps_mean": 2.958568000793457
+  },
   "examples_with_prompt_answer_token_boundary_merge": 285,
   "sequence_log_likelihood": {
     "base": {
@@ -48,6 +53,32 @@
       "billing_disputes_recall": 0.9649122807017544
     }
   },
+  "validation_sequence_log_likelihood_margin": {
+    "definition": "sum log-likelihood(Card Billing Disputes) minus sum log-likelihood(Card Fraud & Security), over continuation tokens",
+    "base": {
+      "count": 71,
+      "mean": 4.759956825950127,
+      "mean_absolute": 6.483369353766096,
+      "mean_by_reference_route": {
+        "Card Billing Disputes": 6.073594816379943,
+        "Card Fraud & Security": -0.5884264207998388
+      }
+    },
+    "adapted": {
+      "count": 71,
+      "mean": 4.759956825950127,
+      "mean_absolute": 6.483369353766096,
+      "mean_by_reference_route": {
+        "Card Billing Disputes": 6.073594816379943,
+        "Card Fraud & Security": -0.5884264207998388
+      }
+    },
+    "adapted_minus_base": {
+      "mean_shift": 0.0,
+      "mean_absolute_shift": 0.0,
+      "sign_flip_count": 0
+    }
+  },
   "mean_token_score_sensitivity": {
     "base_accuracy": 0.8450704225352113,
     "adapted_accuracy": 0.8450704225352113,
@@ -62,12 +93,18 @@
     "fraud_security_recall": 0.0
   },
   "adapter_reload_predictions_identical": true,
-  "elapsed_seconds_including_model_load_baseline_training_scoring_and_reload": 659.038866519928,
+  "adapter_B_tensors_nonzero": 0,
+  "adapter_B_tensors_total": 128,
+  "adapter_file_tensors_nonzero": 128,
+  "adapter_file_tensors_total": 256,
+  "adapter_B_diagnostic": "Post-run CPU inspection of adapter_model.safetensors; all 128 lora_B tensors were exactly zero, consistent with the zero-initialized adapter not receiving effective updates in this run.",
+  "elapsed_seconds_including_model_load_baseline_training_scoring_and_reload": 971.4044880867004,
   "peak_cuda_memory_bytes": 66722334720,
   "limitations": [
     "Development-only internal validation, not official Held-out Evaluation.",
     "Course routing references are synthetic instructional labels, not adjudicated bank policy.",
     "Two official held-out examples were inadvertently previewed earlier; they were not used for training or tuning.",
+    "Training efficacy was not established: first/last 50 step losses did not decline, the base/adapted validation margins were identical, and all saved LoRA B tensors were zero.",
     "Route suggestions require employee confirmation."
   ]
 }
