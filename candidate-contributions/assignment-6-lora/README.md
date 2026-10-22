@@ -27,4 +27,4 @@ No complaint narratives, source CSVs, row-level predictions, adapter weights, or
 
 ## Repository status
 
-The candidate lives on the personal branch `louyinuo/a6-lora-candidate`. The repository has no configured remote, so this package does not claim a GitHub push. Commit information is recorded after the local candidate commit. Review the work before integrating it into the team prototype. The reflection is a draft; the student should personally review the evidence and revise the reflection to accurately describe their own learning before submission.
+The candidate lives on the personal branch `louyinuo/a6-lora-candidate`. Implementation and aggregate evidence were committed as `eba757b`; the final record is a follow-on update on that branch. The repository has no configured remote, so this package does not claim a GitHub push. Review the work before integrating it into the team prototype. The reflection is a draft; the student should personally review the evidence and revise the reflection to accurately describe their own learning before submission.
