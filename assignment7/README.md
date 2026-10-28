@@ -12,4 +12,4 @@ Run local boundary tests from this directory with Python 3.10 or newer:
 python -B -m unittest test_authority_gate.py -v
 ```
 
-This component makes **no model-service call**. Schema alignment was checked against `team5/model_runner.py` on the Team 5 candidate branch; a live DGX interface test and an end-to-end employee workflow test remain unperformed. Do not treat local tests as DGX integration evidence. The team must reconcile its approved schema and queue policy before adopting the gate.
+This component makes **no model-service call**. On 28 October 2026, the fixed candidate commit passed four tests in DGX JupyterLab, and a synthetic six-field result accepted by the fixed Team 5 parser passed into this gate; see [DGX_TEST_EVIDENCE.md](DGX_TEST_EVIDENCE.md). A live DGX model-service request and an end-to-end employee workflow test remain unperformed. The team must reconcile its approved schema and queue policy before adopting the gate.
