@@ -1,0 +1,24 @@
+test_accept_is_only_a_simulated_record (test_review_packet.ContractTests.test_accept_is_only_a_simulated_record) ... ok
+test_bad_quote_fails_closed (test_review_packet.ContractTests.test_bad_quote_fails_closed) ... ok
+test_boolean_cannot_be_a_span_offset (test_review_packet.ContractTests.test_boolean_cannot_be_a_span_offset) ... ok
+test_duplicate_keys_fail_closed (test_review_packet.ContractTests.test_duplicate_keys_fail_closed) ... ok
+test_forbidden_action_cannot_enter_proposal (test_review_packet.ContractTests.test_forbidden_action_cannot_enter_proposal) ... ok
+test_high_risk_cannot_use_routine_action (test_review_packet.ContractTests.test_high_risk_cannot_use_routine_action) ... ok
+test_leakage_fields_rejected (test_review_packet.ContractTests.test_leakage_fields_rejected) ... ok
+test_missing_information_blocks_routine_preparation (test_review_packet.ContractTests.test_missing_information_blocks_routine_preparation) ... ok
+test_modified_packet_cannot_reuse_approval_digest (test_review_packet.ContractTests.test_modified_packet_cannot_reuse_approval_digest) ... ok
+test_non_finite_json_rejected (test_review_packet.ContractTests.test_non_finite_json_rejected) ... ok
+test_raw_screening_runs_independently_of_model_summary (test_review_packet.ContractTests.test_raw_screening_runs_independently_of_model_summary) ... ok
+test_rejection_cannot_preserve_an_operational_action (test_review_packet.ContractTests.test_rejection_cannot_preserve_an_operational_action) ... ok
+test_review_requires_identity_reason_and_checks (test_review_packet.ContractTests.test_review_requires_identity_reason_and_checks) ... ok
+test_schema_validity_does_not_prove_semantic_support (test_review_packet.ContractTests.test_schema_validity_does_not_prove_semantic_support) ... ok
+test_security_route_cannot_use_routine_billing_action (test_review_packet.ContractTests.test_security_route_cannot_use_routine_billing_action) ... ok
+test_timeout_preserves_original_and_manual_path (test_review_packet.ContractTests.test_timeout_preserves_original_and_manual_path) ... ok
+test_unavailable_model_keeps_manual_path (test_review_packet.ContractTests.test_unavailable_model_keeps_manual_path) ... ok
+test_unknown_extra_model_fields_rejected (test_review_packet.ContractTests.test_unknown_extra_model_fields_rejected) ... ok
+test_valid_packet_waits_for_employee (test_review_packet.ContractTests.test_valid_packet_waits_for_employee) ... ok
+
+----------------------------------------------------------------------
+Ran 19 tests in 0.002s
+
+OK

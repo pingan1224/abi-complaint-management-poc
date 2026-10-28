@@ -1,0 +1,20 @@
+{
+  "verification_date_ny": "2026-10-27",
+  "python": "3.12.14",
+  "platform": "Windows-11-10.0.26100-SP0",
+  "tests": 19,
+  "tests_passed": true,
+  "fixtures": "synthetic only",
+  "model_inference": false,
+  "dgx_execution": false,
+  "model_service_interface_tested": false,
+  "official_holdout_opened": false,
+  "sha256": {
+    "action_catalog.json": "3b75491ef028e275ef002a3ab02e0dbe85b2fc08f8a689cf7022c23add9dcad2",
+    "demo.py": "7a4b3e614394933bae695dbb854b6ab2fd8b15a1919834b9af92184837dc39a3",
+    "proposal.schema.json": "a2ae0b9e2b27da2772a4b0ee649d366d666832b6cb5d32272dbcd6a06d82ab17",
+    "README.md": "f4e74ff5a25fe615d81be2a27ff5dc69d9cfc939050170a012666217884d3ef7",
+    "review_packet.py": "44fb1519be8df150c9f0ffefcb2ff9d43b75515fae87ce9360b5b75dc162b55a",
+    "test_review_packet.py": "2e1fb1943da65c45b9fe98188236a268733de7650e938b1c1ef3079533e1dde7"
+  }
+}

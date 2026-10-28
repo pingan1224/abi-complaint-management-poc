@@ -1,0 +1,55 @@
+{
+  "evidence_kind": "SYNTHETIC_OFFLINE_FIXTURE",
+  "packet": {
+    "contract_version": "ass7-v1",
+    "case": {
+      "case_id": "SYN-ASS7-001",
+      "narrative": "I disputed the same charge twice. I need a review."
+    },
+    "proposal": {
+      "summary_claims": [
+        {
+          "text": "Customer reports repeated dispute attempts.",
+          "start": 0,
+          "end": 33,
+          "quote": "I disputed the same charge twice."
+        }
+      ],
+      "missing_information": [
+        "transaction_amount",
+        "prior_case_reference"
+      ],
+      "urgency_level": "Medium",
+      "routing_destination": "Card Billing Disputes",
+      "escalation_required": false,
+      "next_action_id": "REQUEST_INFORMATION"
+    },
+    "review_reasons": [
+      "uncertainty_requires_review"
+    ],
+    "raw_screening_hits": [],
+    "catalog_version": "classroom-actions-v1",
+    "allowed_action_ids": [
+      "REQUEST_INFORMATION",
+      "MANUAL_REVIEW"
+    ],
+    "state": "PENDING_EMPLOYEE_REVIEW",
+    "operational_execution": false,
+    "packet_sha256": "0a0856c7d39e4441aa4baf7683c3c0889a3ced8733cd8a3501a5aec2761bd44e"
+  },
+  "review_record": {
+    "record_type": "SIMULATED_REVIEW_RECORD",
+    "case_id": "SYN-ASS7-001",
+    "packet_sha256": "0a0856c7d39e4441aa4baf7683c3c0889a3ced8733cd8a3501a5aec2761bd44e",
+    "catalog_version": "classroom-actions-v1",
+    "reviewer_id": "SYNTHETIC-REVIEWER",
+    "decision": "accept",
+    "action_id": "REQUEST_INFORMATION",
+    "reason": "Synthetic fixture: collect missing context before assessment.",
+    "original_checked": true,
+    "semantic_support_checked": true,
+    "recorded_at_utc": "2026-10-28T01:25:55.384661+00:00",
+    "state": "RECORDED_FOR_SIMULATED_HANDOFF",
+    "operational_execution": false
+  }
+}
