@@ -1,0 +1,23 @@
+{
+  "version": "classroom-actions-v1",
+  "status": "PROPOSED_FOR_TEAM_REVIEW",
+  "authority": "Illustrative classroom workflow only; no bank policy or instructor endorsement is asserted.",
+  "actions": {
+    "REQUEST_INFORMATION": {
+      "procedure_id": "CLASSROOM-INFO-01",
+      "instruction": "Prepare missing-information questions for employee review. Do not send to a customer."
+    },
+    "PREPARE_BILLING_REVIEW": {
+      "procedure_id": "CLASSROOM-BILL-01",
+      "instruction": "Prepare the original complaint, supported summary and missing items for billing-dispute review. Do not decide liability or relief."
+    },
+    "PREPARE_SPECIALIST_REVIEW": {
+      "procedure_id": "CLASSROOM-SPEC-01",
+      "instruction": "Prepare a specialist-review handoff for an employee-selected destination. Do not determine fraud or regulatory status."
+    },
+    "MANUAL_REVIEW": {
+      "procedure_id": "CLASSROOM-MANUAL-01",
+      "instruction": "Preserve the original complaint and seek manual assessment; no model result is required."
+    }
+  }
+}
