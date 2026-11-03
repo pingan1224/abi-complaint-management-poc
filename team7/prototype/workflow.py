@@ -52,10 +52,23 @@ class Service:
         except (OSError, ValueError, KeyError, IndexError, TypeError):
             return 'unavailable', None, {'failure': 'service_or_envelope_error'}
 
+SCREEN_VERSION = 'classroom-risk-screen-v2'
+
 def screen(narrative):
-    # Illustrative detector, NOT bank policy. Negation and missed signals remain open.
+    # Additive classroom examples only. A missing hit NEVER establishes safety.
+    # Do not suppress existing hits using negation; mixed claims require review.
+    text = narrative.casefold().replace("\u2019", "'")
+    text = re.sub(r"\s+", " ", text)
     phrases = ('unauthorized', 'not my transaction', 'not my purchase', 'did not authorize')
-    return tuple('raw:' + p for p in phrases if re.search(r'\b' + re.escape(p) + r'\b', narrative, re.I))
+    flags = ['raw:' + p for p in phrases if re.search(r'\b' + re.escape(p) + r'\b', text)]
+    examples = {
+        'never_authorized': r"\bi never authori[sz]ed\b",
+        'didnt_authorize': r"\bi didn't authori[sz]e\b",
+        'without_permission': r"\bwithout my permission\b",
+        'didnt_make_purchase': r"\bi (?:didn't|did not) make (?:this|that|the) purchase\b",
+    }
+    flags.extend('raw_v2:' + key for key, pattern in examples.items() if re.search(pattern, text))
+    return tuple(flags)
 
 def compose(case, scope_verified, status, raw, metadata):
     model, issues = None, []
@@ -104,7 +117,7 @@ def compose(case, scope_verified, status, raw, metadata):
     permitted = ['MANUAL_REVIEW'] if queue.startswith('manual') else (
         ['PREPARE_SPECIALIST_REVIEW', 'MANUAL_REVIEW'] if specialist else packet['allowed_action_ids'])
     # Preserve original review packet contract and its digest; workflow restrictions are additional.
-    return dict(version=VERSION, policy_version=POLICY, scope_verified=scope_verified,
+    return dict(version=VERSION, policy_version=POLICY, screen_version=SCREEN_VERSION, scope_verified=scope_verified,
                 queue=queue, specialist_attention_required=specialist, model_status=status,
                 model_output=model if valid else None, service=metadata, original_model_raw=raw,
                 guard=guard, authority=authority, packet=packet, allowed_actions=permitted,
